@@ -1,38 +1,37 @@
 package globalcv
 
 import (
+	jwtmiddleware "github.com/ciehanski/go-jwt-middleware"
 	"github.com/go-chi/chi"
-	"github.com/go-chi/jwtauth"
 	"github.com/jinzhu/gorm"
 	"log"
 	"net/http"
 )
 
 type API struct {
-	Options Options
-	Server  *http.Server
-	Router  chi.Router
-	DB      *gorm.DB
-	Logger  *log.Logger
+	Options       Options
+	Server        *http.Server
+	Router        chi.Router
+	DB            *gorm.DB
+	Logger        *log.Logger
+	JWTMiddleware *jwtmiddleware.JWTMiddleware
 }
 
 type Options struct {
-	Addr         string
-	DBname       string
-	DBhost       string
-	DBuser       string
-	DBpass       string
-	DBssl        string
-	JWTSecret    string
-	JWTTokenAuth *jwtauth.JWTAuth
-	Debug        bool
+	Addr   string
+	DBname string
+	DBhost string
+	DBuser string
+	DBpass string
+	DBssl  string
+	Debug  bool
 }
 
 type User struct {
 	gorm.Model
 	Email          string   `gorm:"type:varchar(255);not null;unique;unique_index:idx_user_by_email" json:"email"`
 	EmailConfirmed bool     `gorm:"type:boolean;not null" json:"email_confirmed"`
-	GcvID          string   `gorm:"type:varchar(64);not null;unique;unique_index:idx_user_by_gcvID" json:"gcvID"`
+	GcvID          string   `gorm:"type:varchar(255);not null;unique;unique_index:idx_user_by_gcvID" json:"gcv_id"`
 	Password       string   `gorm:"type:varchar(255);not null" json:"password,omitempty"`
 	Avatar         string   `gorm:"type:varchar(255)" json:"avatar"`
 	GravatarID     string   `gorm:"type:varchar(255)" json:"gravatar_id"`

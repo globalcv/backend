@@ -10,17 +10,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-chi/jwtauth"
+	"github.com/ciehanski/go-jwt-middleware"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
+	// Postgres Driver
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/natefinch/lumberjack"
 	"golang.org/x/net/http2"
 )
 
 const (
-	// JWT iss & aud
-	jwtIss = "globalcv-backend"
-	jwtAud = "globalcv-frontend"
+	// JWT
+	jwtCookie     = "jwt"
+	refreshCookie = "refresh"
+	jwtIss        = "globalcv-backend"
+	jwtAud        = "globalcv-frontend"
 	// argon params
 	argonTime    = 1
 	argonThreads = 4
@@ -71,9 +75,20 @@ func New(options ...Options) (*API, error) {
 		return nil, err
 	}
 
-	// Set JWT Secret
-	newAPI.Options.JWTSecret = os.Getenv("jwt_secret")
-	newAPI.Options.JWTTokenAuth = jwtauth.New("HS256", newAPI.Options.JWTSecret, nil)
+	// Init JWT
+	newAPI.JWTMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
+		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+			return []byte(os.Getenv("jwt_secret")), nil
+		},
+		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+			w.WriteHeader(http.StatusInternalServerError)
+			newAPI.respond(w, jsonResponse(http.StatusInternalServerError, err.Error()))
+		},
+		SigningMethod:       jwt.SigningMethodHS256,
+		Extractor:           jwtmiddleware.FromCookie(jwtCookie),
+		EnableAuthOnOptions: true,
+		Debug:               newAPI.Options.Debug,
+	})
 
 	// Return the newly initialized API object
 	return &newAPI, nil
@@ -154,7 +169,7 @@ func (a *API) respond(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("X-XSS-Protection", "1; mode=block")
 	w.Header().Set("X-Frame-Options", "deny")
 	// CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "localhost")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Methods", strings.Join([]string{
 		http.MethodHead,

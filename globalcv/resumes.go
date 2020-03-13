@@ -1,6 +1,7 @@
 package globalcv
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -27,7 +28,26 @@ func (a *API) listResumes(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) createResume(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("aaa create"))
+	var resume Resume
+	if err := json.NewDecoder(r.Body).Decode(&resume); err != nil {
+		a.logf("error decoding request: %v", err)
+		a.respond(w, jsonResponse(http.StatusBadRequest, "Bad request"))
+		return
+	}
+
+	// Upload resume file
+	uploadResume(&resume)
+
+	// Create the resume
+	if err := a.DB.Create(&resume).Error; err != nil {
+		a.logf("Unable to create resume %v: %v", resume.ID, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating resume"))
+		return
+	}
+
+	a.logf("Resume %v created", resume.ID)
+	a.respond(w, resume)
 }
 
 func (a *API) getResume(w http.ResponseWriter, r *http.Request) {
@@ -41,13 +61,13 @@ func (a *API) getResume(w http.ResponseWriter, r *http.Request) {
 			a.respond(w, jsonResponse(http.StatusNotFound, "resume not found"))
 			return
 		}
-		a.logf("Database error while getting %s: %v", resume.ID, err)
+		a.logf("Database error while getting %v: %v", resume.ID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error communicating with database"))
 		return
 	}
 
-	a.logf("Resume %s retrieved by ID", resume.ID)
+	a.logf("Resume %v retrieved by ID", resume.ID)
 	a.respond(w, resume)
 }
 
@@ -57,4 +77,8 @@ func (a *API) updateResume(w http.ResponseWriter, r *http.Request) {
 
 func (a *API) deleteResume(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("aaa delete"))
+}
+
+func uploadResume(resume *Resume) {
+
 }

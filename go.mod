@@ -4,9 +4,9 @@ go 1.14
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
+	github.com/ciehanski/go-jwt-middleware v1.0.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-chi/chi v4.0.3+incompatible
-	github.com/go-chi/jwtauth v4.0.4+incompatible
 	github.com/google/uuid v1.1.1
 	github.com/jinzhu/gorm v1.9.12
 	github.com/natefinch/lumberjack v2.0.0+incompatible

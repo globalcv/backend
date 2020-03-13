@@ -9,13 +9,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/chi"
-	"github.com/go-chi/jwtauth"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/argon2"
@@ -56,7 +56,7 @@ func (a *API) getUserByID(w http.ResponseWriter, r *http.Request) {
 			a.respond(w, jsonResponse(http.StatusNotFound, "user not found"))
 			return
 		}
-		a.logf("Database error while getting %s: %v", user.ID, err)
+		a.logf("Database error while getting %v: %v", user.ID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error communicating with database"))
 		return
@@ -65,14 +65,14 @@ func (a *API) getUserByID(w http.ResponseWriter, r *http.Request) {
 	// Sanitize user's password
 	user.Password = ""
 
-	a.logf("User %s retrieved by ID", user.ID)
+	a.logf("User %v retrieved by ID", user.ID)
 	a.respond(w, user)
 }
 
 func (a *API) createUser(w http.ResponseWriter, r *http.Request) {
 	var user User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		a.logf("Bad request: 400")
+		a.logf("error decoding request: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		a.respond(w, jsonResponse(http.StatusBadRequest, "bad request"))
 		return
@@ -81,7 +81,7 @@ func (a *API) createUser(w http.ResponseWriter, r *http.Request) {
 	// Generate argon2 hash of the supplied password to store
 	hashedPassword, hashErr := hashPassword(user.Password)
 	if hashErr != nil {
-		a.logf("Unable to generate random salt for %s's password: %v", user.ID, hashErr)
+		a.logf("Unable to generate random salt for %v's password: %v", user.ID, hashErr)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating user"))
 		return
@@ -98,7 +98,7 @@ func (a *API) createUser(w http.ResponseWriter, r *http.Request) {
 
 	// Create the user
 	if err := a.DB.Create(&user).Error; err != nil {
-		a.logf("Unable to create user %s: %v", user.ID, err)
+		a.logf("Unable to create user %v: %v", user.ID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating user"))
 		return
@@ -106,7 +106,7 @@ func (a *API) createUser(w http.ResponseWriter, r *http.Request) {
 
 	// create JWT in header
 	if err := a.createJWT(w, &user); err != nil {
-		a.logf("Unable to create JWT for user %s: %v", user.ID, err)
+		a.logf("Unable to create JWT for user %v: %v", user.ID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating user"))
 		return
@@ -119,7 +119,7 @@ func (a *API) createUser(w http.ResponseWriter, r *http.Request) {
 	resp := jsonResponse(http.StatusCreated, fmt.Sprintf("User %v created", user.ID))
 	resp["user"] = user
 
-	a.logf("User %s created", user.ID)
+	a.logf("User %v created", user.ID)
 	a.respond(w, resp)
 }
 
@@ -129,12 +129,12 @@ func (a *API) updateUser(w http.ResponseWriter, r *http.Request) {
 	var user User
 	if err := a.DB.Table("users").Where("id = ?", id).First(&user).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			a.logf("User %s not found", id)
+			a.logf("User %v not found", id)
 			w.WriteHeader(http.StatusNotFound)
 			a.respond(w, jsonResponse(http.StatusNotFound, "user not found"))
 			return
 		}
-		a.logf("Database error while getting %s: %v", user.ID, err)
+		a.logf("Database error while getting %v: %v", user.ID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error communicating with database"))
 		return
@@ -146,7 +146,7 @@ func (a *API) updateUser(w http.ResponseWriter, r *http.Request) {
 	// Decode user updates from POST
 	var userUpdates User
 	if err := json.NewDecoder(r.Body).Decode(&userUpdates); err != nil {
-		a.logf("Bad request: 400")
+		a.logf("error decoding request: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		a.respond(w, jsonResponse(http.StatusBadRequest, "bad request"))
 		return
@@ -154,7 +154,7 @@ func (a *API) updateUser(w http.ResponseWriter, r *http.Request) {
 
 	// Validate the user updates
 	if err := a.validateInput(userUpdates); err != nil {
-		a.logf("Unable to validate user %s: %v", user.ID, err)
+		a.logf("Unable to validate user %v: %v", user.ID, err)
 		w.WriteHeader(http.StatusConflict)
 		a.respond(w, jsonResponse(http.StatusConflict, err.Error()))
 		return
@@ -162,7 +162,7 @@ func (a *API) updateUser(w http.ResponseWriter, r *http.Request) {
 
 	// Validate if the updater is actually the user being updated
 	if err := a.validateIdentity(r, &user); err != nil {
-		a.logf("Unable to validate permissions to modify user %s: %v", user.ID, err)
+		a.logf("Unable to validate permissions to modify user %v: %v", user.ID, err)
 		w.WriteHeader(http.StatusForbidden)
 		a.respond(w, jsonResponse(http.StatusForbidden, "invalid permissions"))
 		return
@@ -170,13 +170,13 @@ func (a *API) updateUser(w http.ResponseWriter, r *http.Request) {
 
 	// Only update the fields that were modified
 	if err := a.DB.Model(&user).Updates(userUpdates).Error; err != nil {
-		a.logf("Unable to update user %s: %v", user.ID, err)
+		a.logf("Unable to update user %v: %v", user.ID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error updating user"))
 		return
 	}
 
-	a.logf("User %s has been updated", user.ID)
+	a.logf("User %v has been updated", user.ID)
 	a.respond(w, jsonResponse(http.StatusOK, fmt.Sprintf("User %v successfully updated", user.ID)))
 }
 
@@ -186,12 +186,12 @@ func (a *API) deleteUser(w http.ResponseWriter, r *http.Request) {
 	var user User
 	if err := a.DB.Table("users").Where("id = ?", id).First(&user).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			a.logf("User %s not found", id)
+			a.logf("User %v not found", id)
 			w.WriteHeader(http.StatusNotFound)
 			a.respond(w, jsonResponse(http.StatusNotFound, "user not found"))
 			return
 		}
-		a.logf("Database error while getting %s: %v", user.ID, err)
+		a.logf("Database error while getting %v: %v", user.ID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error communicating with database"))
 		return
@@ -202,7 +202,7 @@ func (a *API) deleteUser(w http.ResponseWriter, r *http.Request) {
 
 	// Validate if the deleter is actually the user being deleted
 	if err := a.validateIdentity(r, &user); err != nil {
-		a.logf("Unable to validate permissions to delete user %s: %v", user.ID, err)
+		a.logf("Unable to validate permissions to delete user %v: %v", user.ID, err)
 		w.WriteHeader(http.StatusForbidden)
 		a.respond(w, jsonResponse(http.StatusForbidden, "invalid permissions"))
 		return
@@ -211,18 +211,18 @@ func (a *API) deleteUser(w http.ResponseWriter, r *http.Request) {
 	// Delete the user
 	if err := a.DB.Table("users").Where("id = ?", id).Delete(&user).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			a.logf("User %s not found", user.ID)
+			a.logf("User %v not found", user.ID)
 			w.WriteHeader(http.StatusNotFound)
 			a.respond(w, jsonResponse(http.StatusNotFound, "user not found"))
 			return
 		}
-		a.logf("Database error while deleting %s: %v", user.ID, err)
+		a.logf("Database error while deleting %v: %v", user.ID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error communicating with database"))
 		return
 	}
 
-	a.logf("User %s has been deleted", user.ID)
+	a.logf("User %v has been deleted", user.ID)
 	a.respond(w, jsonResponse(http.StatusOK, fmt.Sprintf("User %v successfully deleted", user.ID)))
 }
 
@@ -230,7 +230,7 @@ func (a *API) login(w http.ResponseWriter, r *http.Request) {
 	// Decode POST
 	var userReq User
 	if err := json.NewDecoder(r.Body).Decode(&userReq); err != nil {
-		a.logf("Bad request: 400")
+		a.logf("error decoding request: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		a.respond(w, jsonResponse(http.StatusBadRequest, "bad request"))
 		return
@@ -245,7 +245,7 @@ func (a *API) login(w http.ResponseWriter, r *http.Request) {
 			a.respond(w, jsonResponse(http.StatusNotFound, "user not found"))
 			return
 		}
-		a.logf("Database error while authenticating %s: %v", user.ID, err)
+		a.logf("Database error while authenticating %v: %v", user.ID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error communicating with database"))
 		return
@@ -253,12 +253,12 @@ func (a *API) login(w http.ResponseWriter, r *http.Request) {
 
 	// Check password with stored hash
 	if ok, err := comparePasswordHash(user.Password, userReq.Password); !ok {
-		a.logf("Incorrect password entered for %s", user.ID)
+		a.logf("Incorrect password entered for %v", user.ID)
 		w.WriteHeader(http.StatusUnauthorized)
 		a.respond(w, jsonResponse(http.StatusUnauthorized, "incorrect password"))
 		return
 	} else if err != nil {
-		a.logf("Error comparing hash and password for %s: %v", user.ID, err)
+		a.logf("Error comparing hash and password for %v: %v", user.ID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error validating password"))
 		return
@@ -269,7 +269,7 @@ func (a *API) login(w http.ResponseWriter, r *http.Request) {
 
 	// Create JWT
 	if err := a.createJWT(w, &user); err != nil {
-		a.logf("Error creating JWTs for %s: %v", user.ID, err)
+		a.logf("Error creating JWTs for %v: %v", user.ID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating JWT"))
 		return
@@ -279,45 +279,49 @@ func (a *API) login(w http.ResponseWriter, r *http.Request) {
 	resp := jsonResponse(http.StatusOK, fmt.Sprintf("User %v authenticated", user.ID))
 	resp["user"] = user
 
-	a.logf("User %s has been logged in", user.ID)
+	a.logf("User %v has been logged in", user.ID)
 	a.respond(w, resp)
 }
 
 func (a *API) logout(w http.ResponseWriter, r *http.Request) {
-	authCookie, err := r.Cookie("jwt")
-	if err != nil {
+	authCookie, err := r.Cookie(jwtCookie)
+	if err != nil || authCookie == nil {
 		a.logf("Unable to get auth cookie: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error logging user out"))
 		return
-	} else {
-		authCookie.Value = ""
-		authCookie.MaxAge = -1
-		authCookie.Expires = time.Now().Add(-7 * 24 * time.Hour)
-		http.SetCookie(w, authCookie)
 	}
+	authCookie.Value = ""
+	authCookie.MaxAge = -1
+	authCookie.Expires = time.Now().Add(-7 * 24 * time.Hour)
+	http.SetCookie(w, authCookie)
 
-	refreshCookie, err := r.Cookie("refresh")
-	if err != nil {
+	refreshCookie, err := r.Cookie(refreshCookie)
+	if err != nil || refreshCookie == nil {
 		a.logf("Unable to get refresh cookie: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error logging user out"))
 		return
-	} else {
-		refreshCookie.Value = ""
-		refreshCookie.MaxAge = -1
-		refreshCookie.Expires = time.Now().Add(-7 * 24 * time.Hour)
-		http.SetCookie(w, refreshCookie)
 	}
+	refreshCookie.Value = ""
+	refreshCookie.MaxAge = -1
+	refreshCookie.Expires = time.Now().Add(-7 * 24 * time.Hour)
+	http.SetCookie(w, refreshCookie)
 
 	a.logf("User has been logged out")
 	a.respond(w, jsonResponse(http.StatusOK, "User has been logged out"))
 }
 
 func (a *API) validateIdentity(r *http.Request, user *User) error {
-	// Grab user cookie and parse it
-	userHeader := jwtauth.TokenFromCookie(r)
-	token, err := a.Options.JWTTokenAuth.Decode(userHeader)
+	// Grab refresh cookie and parse it
+	cookie, err := r.Cookie(jwtCookie)
+	if err != nil {
+		return err
+	}
+	token, err := jwt.Parse(cookie.Value,
+		func(*jwt.Token) (interface{}, error) {
+			return []byte(os.Getenv("jwt_secret")), nil
+		})
 	if err != nil {
 		return err
 	}
@@ -368,9 +372,9 @@ func (a *API) createJWT(w http.ResponseWriter, user *User) error {
 	claims["nbf"] = time.Now().Unix()
 	claims["iat"] = time.Now().Unix()
 	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
-	_, signedTokenString, err := a.Options.JWTTokenAuth.Encode(claims)
+	signedTokenString, err := token.SignedString([]byte(os.Getenv("jwt_secret")))
 	if err != nil {
-		return err
+		return fmt.Errorf("error signing JWT: %v", err)
 	}
 
 	// Create Refresh JWT
@@ -378,76 +382,102 @@ func (a *API) createJWT(w http.ResponseWriter, user *User) error {
 	refreshJti := uuid.New()
 	// Set token claims
 	refreshClaims := refreshToken.Claims.(jwt.MapClaims)
-	claims["jti"] = refreshJti
-	claims["iss"] = jwtIss
-	claims["aud"] = jwtAud
-	claims["sub"] = user.ID
-	claims["nbf"] = time.Now().Unix()
-	claims["iat"] = time.Now().Unix()
-	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
-	_, refreshSignedTokenString, err := a.Options.JWTTokenAuth.Encode(refreshClaims)
+	refreshClaims["jti"] = refreshJti
+	refreshClaims["iss"] = jwtIss
+	refreshClaims["aud"] = jwtAud
+	refreshClaims["sub"] = user.ID
+	refreshClaims["nbf"] = time.Now().Unix()
+	refreshClaims["iat"] = time.Now().Unix()
+	refreshClaims["exp"] = time.Now().Add(time.Minute * 15).Unix()
+	refreshSignedTokenString, err := refreshToken.SignedString([]byte(os.Getenv("jwt_secret")))
 	if err != nil {
-		return err
+		return fmt.Errorf("error signing refresh token: %v", err)
 	}
-
-	// Refresh cookie
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh",
-		Domain:   "localhost",
-		SameSite: http.SameSiteStrictMode,
-		Value:    refreshSignedTokenString,
-		Path:     "/",
-		HttpOnly: false,
-		Secure:   !a.Options.Debug,
-	})
 
 	// JWT token cookie
 	http.SetCookie(w, &http.Cookie{
-		Name:     "jwt",
+		Name:     jwtCookie,
 		Domain:   "localhost",
 		SameSite: http.SameSiteStrictMode,
 		Value:    signedTokenString,
 		Path:     "/",
-		HttpOnly: false,
+		HttpOnly: true,
 		Secure:   !a.Options.Debug,
 		Expires:  time.Now().Add(time.Minute * 15),
 	})
 	// JWT token header
 	w.Header().Set("Authorization: BEARER", signedTokenString)
 
-	a.logf("JWT created for %s", user.ID)
+	// Refresh cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     refreshCookie,
+		Domain:   "localhost",
+		SameSite: http.SameSiteStrictMode,
+		Value:    refreshSignedTokenString,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   !a.Options.Debug,
+	})
+
+	a.logf("JWT created for %v", user.ID)
 	return nil
 }
 
-func (a *API) refreshAuthToken(w http.ResponseWriter, r *http.Request) {
+func (a *API) refreshToken(w http.ResponseWriter, r *http.Request) {
 	// Grab URL params
 	id := chi.URLParam(r, "userID")
 
 	// Grab refresh cookie and parse it
-	refreshCookie, err := r.Cookie("refresh")
+	refreshCookie, err := r.Cookie(refreshCookie)
 	if err != nil {
 		a.logf("Unable to get token cookie: %v", err)
 		w.WriteHeader(http.StatusUnauthorized)
 		a.respond(w, jsonResponse(http.StatusUnauthorized, "Error authorizing"))
 		return
 	}
-	refreshTok, err := a.Options.JWTTokenAuth.Decode(refreshCookie.Value)
+	refreshTok, err := jwt.Parse(refreshCookie.Value,
+		func(*jwt.Token) (interface{}, error) {
+			return []byte(os.Getenv("jwt_secret")), nil
+		})
 	if err != nil {
 		a.logf("Error parsing refresh token: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "Error authorizing"))
 		return
 	}
+	if refreshTok == nil || !refreshTok.Valid {
+		a.logf("Token not valid: %v", err)
+		w.WriteHeader(http.StatusUnauthorized)
+		a.respond(w, jsonResponse(http.StatusUnauthorized, "Error authorizing"))
+		return
+	}
 
-	// Grab user cookie and parse it
-	userCookie := jwtauth.TokenFromCookie(r)
-	userTok, err := a.Options.JWTTokenAuth.Decode(userCookie)
+	// Grab refresh cookie and parse it
+	userCookie, err := r.Cookie(jwtCookie)
+	if err != nil {
+		a.logf("Unable to get token cookie: %v", err)
+		w.WriteHeader(http.StatusUnauthorized)
+		a.respond(w, jsonResponse(http.StatusUnauthorized, "Error authorizing"))
+		return
+	}
+	userTok, err := jwt.Parse(userCookie.Value,
+		func(*jwt.Token) (interface{}, error) {
+			return []byte(os.Getenv("jwt_secret")), nil
+		})
 	if err != nil {
 		a.logf("Error parsing user token: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "Error authorizing"))
 		return
 	}
+	if userTok == nil || !userTok.Valid {
+		a.logf("Token not valid: %v", err)
+		w.WriteHeader(http.StatusUnauthorized)
+		a.respond(w, jsonResponse(http.StatusUnauthorized, "Error authorizing"))
+		return
+	}
+
+	// Validate user is the same identity that's being requested
 	if userTok.Claims.(jwt.MapClaims)["sub"] != refreshTok.Claims.(jwt.MapClaims)["sub"] {
 		a.logf("Not authorized", refreshTok.Raw, err)
 		w.WriteHeader(http.StatusUnauthorized)
@@ -467,7 +497,7 @@ func (a *API) refreshAuthToken(w http.ResponseWriter, r *http.Request) {
 	claims["nbf"] = time.Now().Unix()
 	claims["iat"] = time.Now().Unix()
 	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
-	_, signedTokenString, err := a.Options.JWTTokenAuth.Encode(claims)
+	signedTokenString, err := token.SignedString([]byte(os.Getenv("jwt_secret")))
 	if err != nil {
 		a.logf("Error encoding JWT: %v", refreshTok.Raw, err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -477,7 +507,7 @@ func (a *API) refreshAuthToken(w http.ResponseWriter, r *http.Request) {
 
 	// JWT token cookie
 	http.SetCookie(w, &http.Cookie{
-		Name:     "jwt",
+		Name:     jwtCookie,
 		Domain:   "localhost",
 		SameSite: http.SameSiteStrictMode,
 		Value:    signedTokenString,
