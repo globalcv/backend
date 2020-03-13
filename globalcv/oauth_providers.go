@@ -1,4 +1,4 @@
-package oauth
+package globalcv
 
 import (
 	"context"
@@ -13,6 +13,8 @@ import (
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
+	"golang.org/x/oauth2/gitlab"
+	"golang.org/x/oauth2/linkedin"
 )
 
 var ghOAuthConfig = &oauth2.Config{
@@ -23,13 +25,42 @@ var ghOAuthConfig = &oauth2.Config{
 	Endpoint:     github.Endpoint,
 }
 
+var glOAuthConfig = &oauth2.Config{
+	RedirectURL:  "https://globalcv.io/oauth/gitlab/callback",
+	ClientID:     os.Getenv("gl_id"),
+	ClientSecret: os.Getenv("gl_secret"),
+	Scopes:       []string{"read_user"},
+	Endpoint:     gitlab.Endpoint,
+}
+
+var liOAuthConfig = &oauth2.Config{
+	RedirectURL:  "https://globalcv.io/oauth/linkedin/callback",
+	ClientID:     os.Getenv("li_id"),
+	ClientSecret: os.Getenv("li_secret"),
+	// Get correct scope for LinkedIn API
+	Scopes:   []string{"user"},
+	Endpoint: linkedin.Endpoint,
+}
+
+func LinkedInLogin(w http.ResponseWriter, r *http.Request) {
+	oauthState := generateOAuthState(w, LinkedInCookie)
+	u := liOAuthConfig.AuthCodeURL(oauthState)
+	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
+}
+
+func GitLabLogin(w http.ResponseWriter, r *http.Request) {
+	oauthState := generateOAuthState(w, GitLabCookie)
+	u := glOAuthConfig.AuthCodeURL(oauthState)
+	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
+}
+
 func GitHubLogin(w http.ResponseWriter, r *http.Request) {
-	oauthState := generateGhOAuthState(w)
+	oauthState := generateOAuthState(w, GithubCookie)
 	u := ghOAuthConfig.AuthCodeURL(oauthState)
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
 }
 
-func generateGhOAuthState(w http.ResponseWriter) string {
+func generateOAuthState(w http.ResponseWriter, cookieName string) string {
 	var expiration = time.Now().Add(365 * 24 * time.Hour)
 
 	b := make([]byte, 16)
@@ -40,38 +71,10 @@ func generateGhOAuthState(w http.ResponseWriter) string {
 	}
 
 	state := base64.URLEncoding.EncodeToString(b)
-	cookie := http.Cookie{Name: "github_oauth", Value: state, Expires: expiration}
+	cookie := http.Cookie{Name: cookieName, Value: state, Expires: expiration}
 	http.SetCookie(w, &cookie)
 
 	return state
-}
-
-func GitHubCallback(w http.ResponseWriter, r *http.Request) {
-	// Read oauthState from Cookie
-	oauthState, err := r.Cookie("github_oauth")
-	if err != nil {
-		http.Error(w, "cookie not found", http.StatusUnauthorized)
-		return
-	}
-
-	if r.FormValue("state") != oauthState.Value {
-		log.Println("invalid oauth github state")
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-	}
-
-	data, err := getUserDataFromGitHub(r.FormValue("code"))
-	if err != nil {
-		log.Println(err.Error())
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-	}
-
-	// GetOrCreate User in your db.
-
-	// Redirect or response with a token.
-
-	fmt.Fprintf(w, "UserInfo: %s\n", data)
 }
 
 //"login": "octocat",

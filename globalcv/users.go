@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -388,7 +389,6 @@ func (a *API) createJWT(w http.ResponseWriter, user *User) error {
 	refreshClaims["sub"] = user.ID
 	refreshClaims["nbf"] = time.Now().Unix()
 	refreshClaims["iat"] = time.Now().Unix()
-	refreshClaims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 	refreshSignedTokenString, err := refreshToken.SignedString([]byte(os.Getenv("jwt_secret")))
 	if err != nil {
 		return fmt.Errorf("error signing refresh token: %v", err)
@@ -572,4 +572,75 @@ func comparePasswordHash(expectedPassword, providedPassword string) (bool, error
 	providedPasswordHash := argon2.IDKey([]byte(providedPassword), salt, iter, mem, thread,
 		uint32(len(actualPasswordHash)))
 	return subtle.ConstantTimeCompare(actualPasswordHash, providedPasswordHash) == 1, nil
+}
+
+func (a *API) GitHubCallback(w http.ResponseWriter, r *http.Request) {
+	// Read oauthState from Cookie
+	oauthState, err := r.Cookie(GithubCookie)
+	if err != nil {
+		http.Error(w, "cookie not found", http.StatusUnauthorized)
+		return
+	}
+
+	if r.FormValue("state") != oauthState.Value {
+		log.Println("invalid oauth github state")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
+
+	data, err := getUserDataFromGitHub(r.FormValue("code"))
+	if err != nil {
+		log.Println(err.Error())
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
+
+	// Grab user email + avatar
+	fmt.Println(data)
+
+	// GetOrCreate User in your db.
+	var user User
+	//if err := json.NewDecoder(data).Decode(&user); err != nil {
+	//	a.logf("error decoding request: %v", err)
+	//	w.WriteHeader(http.StatusBadRequest)
+	//	a.respond(w, jsonResponse(http.StatusBadRequest, "bad request"))
+	//	return
+	//}
+
+	// Check if user exists
+	// If user does, just generate JWT and log in
+	// else create the user
+
+	// Force lowercase email in database
+	user.Email = strings.ToLower(user.Email)
+
+	// Generate gcvID
+	s := sha512.Sum512([]byte(user.Email))
+	user.GcvID = base64.StdEncoding.EncodeToString(s[:])
+
+	// Set GitHubLogin to true
+	user.GitHubLogin = true
+
+	// Create the user
+	if err := a.DB.Create(&user).Error; err != nil {
+		a.logf("Unable to create user %v: %v", user.ID, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating user"))
+		return
+	}
+
+	// create JWT
+	if err := a.createJWT(w, &user); err != nil {
+		a.logf("Unable to create JWT for user %v: %v", user.ID, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating user"))
+		return
+	}
+
+	// Send back response
+	resp := jsonResponse(http.StatusCreated, fmt.Sprintf("User %v created", user.ID))
+	resp["user"] = user
+
+	a.logf("User %v created", user.ID)
+	a.respond(w, resp)
 }

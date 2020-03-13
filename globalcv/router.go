@@ -3,8 +3,6 @@ package globalcv
 import (
 	"time"
 
-	"globalcv/oauth"
-
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 )
@@ -58,18 +56,18 @@ func (a *API) userRoutes() {
 	a.Router.Route("/oauth", func(r chi.Router) {
 		// GitHub OAuth
 		r.Group(func(r chi.Router) {
-			r.Post("/github", oauth.GitHubLogin)
-			r.Get("/github/callback", oauth.GitHubCallback)
+			r.Post("/github", GitHubLogin)
+			r.Get("/github/callback", a.GitHubCallback)
 		})
 		// GitLab OAuth
 		r.Group(func(r chi.Router) {
-			r.Post("/gitlab", oauth.GitlabLogin)
-			r.Get("/gitlab/callback", oauth.GitHubCallback)
+			r.Post("/gitlab", GitLabLogin)
+			//r.Get("/gitlab/callback", a.GitLabCallback)
 		})
 		// LinkedIn OAuth
 		r.Group(func(r chi.Router) {
-			r.Post("/linkedin", oauth.LinkedInLogin)
-			r.Get("/linkedin/callback", oauth.GitHubCallback)
+			r.Post("/linkedin", LinkedInLogin)
+			//r.Get("/linkedin/callback", a.LinkedInCallback)
 		})
 	})
 }

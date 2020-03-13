@@ -54,7 +54,7 @@ func main() {
 
 	// Start the server
 	if err = a.Run(); err != nil {
-		a.Logger.Fatalf("Error starting resume server: %v", err)
+		a.Logger.Fatalf("Error running resume server: %v", err)
 	}
 
 	<-done

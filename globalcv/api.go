@@ -25,6 +25,10 @@ const (
 	refreshCookie = "refresh"
 	jwtIss        = "globalcv-backend"
 	jwtAud        = "globalcv-frontend"
+	// OAuth
+	GithubCookie   = "github_oauth"
+	GitLabCookie   = "gitlab_oauth"
+	LinkedInCookie = "linkedin_oauth"
 	// argon params
 	argonTime    = 1
 	argonThreads = 4

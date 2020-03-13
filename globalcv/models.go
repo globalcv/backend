@@ -29,6 +29,10 @@ type Options struct {
 
 type User struct {
 	gorm.Model
+	GitHubLogin    bool     `gorm:"type:boolean" json:"github_login,omitempty"`
+	GitLabLogin    bool     `gorm:"type:boolean" json:"gitlab_login,omitempty"`
+	LinkedInLogin  bool     `gorm:"type:boolean" json:"linkedin_login,omitempty"`
+	EmailLogin     bool     `gorm:"type:boolean" json:"email_login,omitempty"`
 	Email          string   `gorm:"type:varchar(255);not null;unique;unique_index:idx_user_by_email" json:"email"`
 	EmailConfirmed bool     `gorm:"type:boolean;not null" json:"email_confirmed"`
 	GcvID          string   `gorm:"type:varchar(255);not null;unique;unique_index:idx_user_by_gcvID" json:"gcv_id"`
