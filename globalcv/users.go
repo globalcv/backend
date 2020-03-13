@@ -479,7 +479,8 @@ func (a *API) refreshToken(w http.ResponseWriter, r *http.Request) {
 
 	// Validate user is the same identity that's being requested
 	if userTok.Claims.(jwt.MapClaims)["sub"] != refreshTok.Claims.(jwt.MapClaims)["sub"] {
-		a.logf("Not authorized", refreshTok.Raw, err)
+		a.logf("Not authorized: user: %v, refresh: %v", userTok.Claims.(jwt.MapClaims)["sub"],
+			refreshTok.Claims.(jwt.MapClaims)["sub"])
 		w.WriteHeader(http.StatusUnauthorized)
 		a.respond(w, jsonResponse(http.StatusUnauthorized, "Not authorized"))
 		return
@@ -499,7 +500,7 @@ func (a *API) refreshToken(w http.ResponseWriter, r *http.Request) {
 	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 	signedTokenString, err := token.SignedString([]byte(os.Getenv("jwt_secret")))
 	if err != nil {
-		a.logf("Error encoding JWT: %v", refreshTok.Raw, err)
+		a.logf("Error encoding JWT: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, ""))
 		return
