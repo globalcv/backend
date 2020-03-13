@@ -5,11 +5,16 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 
 	"globalcv/globalcv"
 )
 
 func main() {
+	debug, err := strconv.ParseBool(os.Getenv("debug"))
+	if err != nil {
+		log.Println("Error getting debug environment variable")
+	}
 	a, err := globalcv.New(globalcv.Options{
 		Addr:   os.Getenv("addr"),
 		DBhost: os.Getenv("dbhost"),
@@ -17,15 +22,15 @@ func main() {
 		DBuser: os.Getenv("dbuser"),
 		DBpass: os.Getenv("dbpass"),
 		DBssl:  os.Getenv("dbssl"),
-		Debug:  true,
+		Debug:  debug,
 	})
 	if err != nil {
 		log.Fatalf("Error initializing API: %v", err)
 	}
 	// Gracefully defer close connection to database
 	defer func() {
-		if err := a.Options.DB.Close(); err != nil {
-			a.Options.Logger.Fatalf("Error closing connection to database: %v", err)
+		if err := a.DB.Close(); err != nil {
+			a.Logger.Fatalf("Error closing connection to database: %v", err)
 		}
 	}()
 
@@ -35,21 +40,21 @@ func main() {
 	signal.Notify(quit, os.Interrupt)
 	go func() {
 		<-quit
-		a.Options.Logger.Println("Server is shutting down...")
+		a.Logger.Println("Server is shutting down...")
 
-		ctx, cancel := context.WithTimeout(context.Background(), a.Options.Server.WriteTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), a.Server.WriteTimeout)
 		defer cancel()
 
-		a.Options.Server.SetKeepAlivesEnabled(false)
-		if err := a.Options.Server.Shutdown(ctx); err != nil {
-			a.Options.Logger.Fatalf("Could not gracefully shutdown the server: %v", err)
+		a.Server.SetKeepAlivesEnabled(false)
+		if err := a.Server.Shutdown(ctx); err != nil {
+			a.Logger.Fatalf("Could not gracefully shutdown the server: %v", err)
 		}
 		close(done)
 	}()
 
 	// Start the server
 	if err = a.Run(); err != nil {
-		a.Options.Logger.Fatalf("Error starting resume server: %v", err)
+		a.Logger.Fatalf("Error starting resume server: %v", err)
 	}
 
 	<-done

@@ -19,8 +19,8 @@ import (
 
 const (
 	// JWT iss & aud
-	jwtIss = "resume-backend"
-	jwtAud = "resume-frontend"
+	jwtIss = "globalcv-backend"
+	jwtAud = "globalcv-frontend"
 	// argon params
 	argonTime    = 1
 	argonThreads = 4
@@ -39,24 +39,24 @@ func New(options ...Options) (*API, error) {
 	if opts.Addr == "" {
 		opts.Addr = "127.0.0.1:8000"
 	}
-	if opts.Logger == nil {
-		opts.Logger = log.New(os.Stdout, "[resume-api] ", log.LstdFlags)
-		if !opts.Debug {
-			opts.Logger.SetOutput(&lumberjack.Logger{
-				Filename:   "/var/log/resume.log",
-				MaxSize:    500, // megabytes
-				MaxBackups: 3,
-				MaxAge:     28, //days
-				Compress:   true,
-			})
-		}
-	}
 	if opts.DBname == "" || opts.DBpass == "" || opts.DBuser == "" || opts.DBhost == "" {
 		return nil, errors.New("please provide database parameters")
 	}
 
 	// Create new API object based on provided parameters
 	newAPI := API{Options: opts}
+
+	// Create Logger
+	newAPI.Logger = log.New(os.Stdout, "[globalcv-api] ", log.LstdFlags)
+	if !opts.Debug {
+		newAPI.Logger.SetOutput(&lumberjack.Logger{
+			Filename:   "/var/log/globalcv.log",
+			MaxSize:    500, // megabytes
+			MaxBackups: 3,
+			MaxAge:     28, //days
+			Compress:   true,
+		})
+	}
 
 	// Init DB
 	if err := newAPI.initDB(); err != nil {
@@ -80,21 +80,21 @@ func New(options ...Options) (*API, error) {
 }
 
 func (a *API) Run() error {
-	a.Options.Logger.Println(fmt.Sprintf("Server is listening at: %s", a.Options.Addr))
-	return a.Options.Server.ListenAndServe()
+	a.Logger.Println(fmt.Sprintf("Server is listening at: %s", a.Options.Addr))
+	return a.Server.ListenAndServe()
 }
 
 func (a *API) initServer() error {
 	// Best practice to set timeouts to avoid Slowloris attacks.
-	a.Options.Server = &http.Server{
+	a.Server = &http.Server{
 		Addr:         a.Options.Addr,
 		WriteTimeout: time.Second * 10,
 		ReadTimeout:  time.Second * 5,
 		IdleTimeout:  time.Second * 10,
-		Handler:      a.Options.Router,
+		Handler:      a.Router,
 	}
 	// Enable HTTP/2
-	if err := http2.ConfigureServer(a.Options.Server, &http2.Server{}); err != nil {
+	if err := http2.ConfigureServer(a.Server, &http2.Server{}); err != nil {
 		return err
 	}
 	return nil
@@ -107,34 +107,34 @@ func (a *API) initDB() error {
 
 	// Connect to the database
 	var err error
-	if a.Options.DB, err = gorm.Open("postgres", dbURI); err != nil {
+	if a.DB, err = gorm.Open("postgres", dbURI); err != nil {
 		return err
 	}
 
 	// Enable pooling
 	// ref: https://github.com/jinzhu/gorm/issues/246
-	a.Options.DB.DB().SetMaxIdleConns(0)
-	a.Options.DB.DB().SetMaxOpenConns(0)
+	a.DB.DB().SetMaxIdleConns(0)
+	a.DB.DB().SetMaxOpenConns(0)
 
 	// Double-check we can ping the DB after it connects
-	if err = a.Options.DB.DB().Ping(); err != nil {
+	if err = a.DB.DB().Ping(); err != nil {
 		return err
 	}
 
 	// Auto migrate database based on the model structs below
 	if a.Options.Debug {
-		a.Options.DB.Debug().AutoMigrate(User{}, Resume{})
+		a.DB.Debug().AutoMigrate(User{}, Resume{})
 		return nil
 	}
 
-	a.Options.DB.AutoMigrate(User{}, Resume{})
+	a.DB.AutoMigrate(User{}, Resume{})
 	return nil
 }
 
 // logf prints application errors if debug is enabled
 func (a *API) logf(format string, args ...interface{}) {
 	if a.Options.Debug {
-		a.Options.Logger.Printf(format, args...)
+		a.Logger.Printf(format, args...)
 	}
 }
 
@@ -154,7 +154,7 @@ func (a *API) respond(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("X-XSS-Protection", "1; mode=block")
 	w.Header().Set("X-Frame-Options", "deny")
 	// CORS headers
-	//w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Methods", strings.Join([]string{
 		http.MethodHead,
@@ -169,6 +169,6 @@ func (a *API) respond(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Vary", "Accept-Encoding, Accept")
 
 	if err := json.NewEncoder(w).Encode(data); err != nil {
-		a.Options.Logger.Println(err)
+		a.Logger.Println(err)
 	}
 }

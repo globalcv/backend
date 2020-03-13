@@ -2,6 +2,7 @@ package globalcv
 
 import (
 	"crypto/rand"
+	"crypto/sha512"
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
@@ -22,7 +23,7 @@ import (
 
 func (a *API) listUsers(w http.ResponseWriter, r *http.Request) {
 	var users []User
-	if err := a.Options.DB.Find(&users).Error; err != nil {
+	if err := a.DB.Table("users").Find(&users).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			a.logf("Unable to retrieve all users")
 			w.WriteHeader(http.StatusNotFound)
@@ -48,7 +49,7 @@ func (a *API) getUserByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "userID")
 
 	var user User
-	if err := a.Options.DB.Table("users").Where("id = ?", id).First(&user).Error; err != nil {
+	if err := a.DB.Table("users").Where("id = ?", id).First(&user).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			a.logf("User %v not found", id)
 			w.WriteHeader(http.StatusNotFound)
@@ -91,8 +92,12 @@ func (a *API) createUser(w http.ResponseWriter, r *http.Request) {
 	// Force lowercase email in database
 	user.Email = strings.ToLower(user.Email)
 
+	// Generate gcvID
+	s := sha512.Sum512([]byte(user.Email))
+	user.GcvID = base64.StdEncoding.EncodeToString(s[:])
+
 	// Create the user
-	if err := a.Options.DB.Create(&user).Error; err != nil {
+	if err := a.DB.Create(&user).Error; err != nil {
 		a.logf("Unable to create user %s: %v", user.ID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating user"))
@@ -122,7 +127,7 @@ func (a *API) updateUser(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "userID")
 
 	var user User
-	if err := a.Options.DB.Table("users").Where("id = ?", id).First(&user).Error; err != nil {
+	if err := a.DB.Table("users").Where("id = ?", id).First(&user).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			a.logf("User %s not found", id)
 			w.WriteHeader(http.StatusNotFound)
@@ -164,7 +169,7 @@ func (a *API) updateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Only update the fields that were modified
-	if err := a.Options.DB.Model(&user).Updates(userUpdates).Error; err != nil {
+	if err := a.DB.Model(&user).Updates(userUpdates).Error; err != nil {
 		a.logf("Unable to update user %s: %v", user.ID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		a.respond(w, jsonResponse(http.StatusInternalServerError, "error updating user"))
@@ -179,7 +184,7 @@ func (a *API) deleteUser(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "userID")
 
 	var user User
-	if err := a.Options.DB.Table("users").Where("id = ?", id).First(&user).Error; err != nil {
+	if err := a.DB.Table("users").Where("id = ?", id).First(&user).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			a.logf("User %s not found", id)
 			w.WriteHeader(http.StatusNotFound)
@@ -204,7 +209,7 @@ func (a *API) deleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Delete the user
-	if err := a.Options.DB.Table("users").Where("id = ?", id).Delete(&user).Error; err != nil {
+	if err := a.DB.Table("users").Where("id = ?", id).Delete(&user).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			a.logf("User %s not found", user.ID)
 			w.WriteHeader(http.StatusNotFound)
@@ -233,7 +238,7 @@ func (a *API) login(w http.ResponseWriter, r *http.Request) {
 
 	// Does the user exist?
 	var user User
-	if err := a.Options.DB.Table("users").Where("email = ?", userReq.Email).First(&user).Error; err != nil {
+	if err := a.DB.Table("users").Where("email = ?", userReq.Email).First(&user).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			a.logf("User %s not found", userReq.Email)
 			w.WriteHeader(http.StatusNotFound)
@@ -292,13 +297,26 @@ func (a *API) logout(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, authCookie)
 	}
 
+	refreshCookie, err := r.Cookie("refresh")
+	if err != nil {
+		a.logf("Unable to get refresh cookie: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		a.respond(w, jsonResponse(http.StatusInternalServerError, "error logging user out"))
+		return
+	} else {
+		refreshCookie.Value = ""
+		refreshCookie.MaxAge = -1
+		refreshCookie.Expires = time.Now().Add(-7 * 24 * time.Hour)
+		http.SetCookie(w, refreshCookie)
+	}
+
 	a.logf("User has been logged out")
 	a.respond(w, jsonResponse(http.StatusOK, "User has been logged out"))
 }
 
 func (a *API) validateIdentity(r *http.Request, user *User) error {
 	// Grab user cookie and parse it
-	userHeader := jwtauth.TokenFromHeader(r)
+	userHeader := jwtauth.TokenFromCookie(r)
 	token, err := a.Options.JWTTokenAuth.Decode(userHeader)
 	if err != nil {
 		return err
@@ -310,7 +328,7 @@ func (a *API) validateIdentity(r *http.Request, user *User) error {
 }
 
 func (a *API) validateInput(user User) error {
-	if err := a.Options.DB.Table("users").Where("email = ?", user.Email).First(&user).Error; err == nil {
+	if err := a.DB.Table("users").Where("email = ?", user.Email).First(&user).Error; err == nil {
 		return errors.New("email address already in use")
 	}
 	validateCap := regexp.MustCompile(`[A-Z]+`)
@@ -323,7 +341,7 @@ func (a *API) validateInput(user User) error {
 		return errors.New("invalid email provided")
 	case len(user.Password) < 8:
 		return errors.New("password too short")
-	case len(user.Password) > 255:
+	case len(user.Password) > 254:
 		return errors.New("password too long")
 	case !validateSymbols.MatchString(user.Password):
 		return errors.New("password must contain a symbol")
@@ -355,6 +373,34 @@ func (a *API) createJWT(w http.ResponseWriter, user *User) error {
 		return err
 	}
 
+	// Create Refresh JWT
+	refreshToken := jwt.New(jwt.SigningMethodHS256)
+	refreshJti := uuid.New()
+	// Set token claims
+	refreshClaims := refreshToken.Claims.(jwt.MapClaims)
+	claims["jti"] = refreshJti
+	claims["iss"] = jwtIss
+	claims["aud"] = jwtAud
+	claims["sub"] = user.ID
+	claims["nbf"] = time.Now().Unix()
+	claims["iat"] = time.Now().Unix()
+	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
+	_, refreshSignedTokenString, err := a.Options.JWTTokenAuth.Encode(refreshClaims)
+	if err != nil {
+		return err
+	}
+
+	// Refresh cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh",
+		Domain:   "localhost",
+		SameSite: http.SameSiteStrictMode,
+		Value:    refreshSignedTokenString,
+		Path:     "/",
+		HttpOnly: false,
+		Secure:   !a.Options.Debug,
+	})
+
 	// JWT token cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt",
@@ -364,12 +410,85 @@ func (a *API) createJWT(w http.ResponseWriter, user *User) error {
 		Path:     "/",
 		HttpOnly: false,
 		Secure:   !a.Options.Debug,
+		Expires:  time.Now().Add(time.Minute * 15),
 	})
 	// JWT token header
 	w.Header().Set("Authorization: BEARER", signedTokenString)
 
 	a.logf("JWT created for %s", user.ID)
 	return nil
+}
+
+func (a *API) refreshAuthToken(w http.ResponseWriter, r *http.Request) {
+	// Grab URL params
+	id := chi.URLParam(r, "userID")
+
+	// Grab refresh cookie and parse it
+	refreshCookie, err := r.Cookie("refresh")
+	if err != nil {
+		a.logf("Unable to get token cookie: %v", err)
+		w.WriteHeader(http.StatusUnauthorized)
+		a.respond(w, jsonResponse(http.StatusUnauthorized, "Error authorizing"))
+		return
+	}
+	refreshTok, err := a.Options.JWTTokenAuth.Decode(refreshCookie.Value)
+	if err != nil {
+		a.logf("Error parsing refresh token: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		a.respond(w, jsonResponse(http.StatusInternalServerError, "Error authorizing"))
+		return
+	}
+
+	// Grab user cookie and parse it
+	userCookie := jwtauth.TokenFromCookie(r)
+	userTok, err := a.Options.JWTTokenAuth.Decode(userCookie)
+	if err != nil {
+		a.logf("Error parsing user token: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		a.respond(w, jsonResponse(http.StatusInternalServerError, "Error authorizing"))
+		return
+	}
+	if userTok.Claims.(jwt.MapClaims)["sub"] != refreshTok.Claims.(jwt.MapClaims)["sub"] {
+		a.logf("Not authorized", refreshTok.Raw, err)
+		w.WriteHeader(http.StatusUnauthorized)
+		a.respond(w, jsonResponse(http.StatusUnauthorized, "Not authorized"))
+		return
+	}
+
+	// Everything is valid, create JWT
+	token := jwt.New(jwt.SigningMethodHS256)
+	jti := uuid.New()
+	// Set token claims
+	claims := token.Claims.(jwt.MapClaims)
+	claims["jti"] = jti
+	claims["iss"] = jwtIss
+	claims["aud"] = jwtAud
+	claims["sub"] = id
+	claims["nbf"] = time.Now().Unix()
+	claims["iat"] = time.Now().Unix()
+	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
+	_, signedTokenString, err := a.Options.JWTTokenAuth.Encode(claims)
+	if err != nil {
+		a.logf("Error encoding JWT: %v", refreshTok.Raw, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		a.respond(w, jsonResponse(http.StatusInternalServerError, ""))
+		return
+	}
+
+	// JWT token cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "jwt",
+		Domain:   "localhost",
+		SameSite: http.SameSiteStrictMode,
+		Value:    signedTokenString,
+		Path:     "/",
+		Expires:  time.Now().Add(time.Minute * 15),
+		HttpOnly: true,
+		Secure:   !a.Options.Debug,
+	})
+
+	a.logf("Auth token refreshed for %v", id)
+	a.respond(w, jsonResponse(http.StatusOK, "User token has been refreshed"))
 }
 
 func hashPassword(password string) (string, error) {

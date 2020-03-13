@@ -17,19 +17,19 @@ import (
 
 var ghOAuthConfig = &oauth2.Config{
 	RedirectURL:  "https://globalcv.io/oauth/github/callback",
-	ClientID:     os.Getenv("gb_id"),
-	ClientSecret: os.Getenv("gb_secret"),
+	ClientID:     os.Getenv("gh_id"),
+	ClientSecret: os.Getenv("gh_secret"),
 	Scopes:       []string{"user"},
 	Endpoint:     github.Endpoint,
 }
 
 func GitHubLogin(w http.ResponseWriter, r *http.Request) {
-	oauthState := generateOAuthState(w)
+	oauthState := generateGhOAuthState(w)
 	u := ghOAuthConfig.AuthCodeURL(oauthState)
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
 }
 
-func generateOAuthState(w http.ResponseWriter) string {
+func generateGhOAuthState(w http.ResponseWriter) string {
 	var expiration = time.Now().Add(365 * 24 * time.Hour)
 
 	b := make([]byte, 16)

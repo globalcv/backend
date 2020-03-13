@@ -9,7 +9,7 @@ import (
 
 func (a *API) listResumes(w http.ResponseWriter, r *http.Request) {
 	var resumes []Resume
-	if err := a.Options.DB.Find(&resumes).Error; err != nil {
+	if err := a.DB.Table("resumes").Find(&resumes).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			a.logf("Unable to retrieve all resumes")
 			w.WriteHeader(http.StatusNotFound)
@@ -34,7 +34,7 @@ func (a *API) getResume(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "resumeID")
 
 	var resume Resume
-	if err := a.Options.DB.Table("resumes").Where("id = ?", id).First(&resume).Error; err != nil {
+	if err := a.DB.Table("resumes").Where("id = ?", id).First(&resume).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			a.logf("Resume %v not found", id)
 			w.WriteHeader(http.StatusNotFound)
