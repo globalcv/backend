@@ -594,84 +594,84 @@ func (a *API) GitHubCallback(w http.ResponseWriter, r *http.Request) {
 		// Grab user email + avatar
 		fmt.Println(data)
 
-		// Create user
-		var user User
-		if err := a.DB.Table("users").Where("email = ?", data.Email).First(&user).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				// create user
-
-				// Force lowercase email in database
-				user.Email = strings.ToLower(user.Email)
-
-				// Generate gcvID
-				s := sha512.Sum512([]byte(user.Email))
-				user.GcvID = base64.StdEncoding.EncodeToString(s[:])
-
-				// Set GitHubLogin to true
-				user.GitHubLogin = true
-
-				// Create the user
-				if err := a.DB.Create(&user).Error; err != nil {
-					a.logf("Unable to create user %v: %v", user.ID, err)
-					w.WriteHeader(http.StatusInternalServerError)
-					a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating user"))
-					return
-				}
-
-				// create JWT
-				if err := a.createJWT(w, &user); err != nil {
-					a.logf("Unable to create JWT for user %v: %v", user.ID, err)
-					w.WriteHeader(http.StatusInternalServerError)
-					a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating user"))
-					return
-				}
-
-				// Send back response
-				resp := jsonResponse(http.StatusCreated, fmt.Sprintf("User %v created", user.ID))
-				resp["user"] = user
-
-				a.logf("User %v created", user.ID)
-				a.respond(w, resp)
-				return
-			}
-			a.logf("Database error while authenticating %v: %v", user.ID, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			a.respond(w, jsonResponse(http.StatusInternalServerError, "error communicating with database"))
-			return
-		}
-
-		// log in user
-
-		// Check password with stored hash
-		if ok, err := comparePasswordHash(user.Password, userReq.Password); !ok {
-			a.logf("Incorrect password entered for %v", user.ID)
-			w.WriteHeader(http.StatusUnauthorized)
-			a.respond(w, jsonResponse(http.StatusUnauthorized, "incorrect password"))
-			return
-		} else if err != nil {
-			a.logf("Error comparing hash and password for %v: %v", user.ID, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			a.respond(w, jsonResponse(http.StatusInternalServerError, "error validating password"))
-			return
-		}
-
-		// Sanitize user's password
-		user.Password = ""
-
-		// Create JWT
-		if err := a.createJWT(w, &user); err != nil {
-			a.logf("Error creating JWTs for %v: %v", user.ID, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating JWT"))
-			return
-		}
-
-		// Send back user info in response
-		resp := jsonResponse(http.StatusOK, fmt.Sprintf("User %v authenticated", user.ID))
-		resp["user"] = user
-
-		a.logf("User %v has been logged in", user.ID)
-		a.respond(w, resp)
-
+		//	// Create user
+		//	var user User
+		//	if err := a.DB.Table("users").Where("email = ?", data.Email).First(&user).Error; err != nil {
+		//		if gorm.IsRecordNotFoundError(err) {
+		//			// create user
+		//
+		//			// Force lowercase email in database
+		//			user.Email = strings.ToLower(user.Email)
+		//
+		//			// Generate gcvID
+		//			s := sha512.Sum512([]byte(user.Email))
+		//			user.GcvID = base64.StdEncoding.EncodeToString(s[:])
+		//
+		//			// Set GitHubLogin to true
+		//			user.GitHubLogin = true
+		//
+		//			// Create the user
+		//			if err := a.DB.Create(&user).Error; err != nil {
+		//				a.logf("Unable to create user %v: %v", user.ID, err)
+		//				w.WriteHeader(http.StatusInternalServerError)
+		//				a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating user"))
+		//				return
+		//			}
+		//
+		//			// create JWT
+		//			if err := a.createJWT(w, &user); err != nil {
+		//				a.logf("Unable to create JWT for user %v: %v", user.ID, err)
+		//				w.WriteHeader(http.StatusInternalServerError)
+		//				a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating user"))
+		//				return
+		//			}
+		//
+		//			// Send back response
+		//			resp := jsonResponse(http.StatusCreated, fmt.Sprintf("User %v created", user.ID))
+		//			resp["user"] = user
+		//
+		//			a.logf("User %v created", user.ID)
+		//			a.respond(w, resp)
+		//			return
+		//		}
+		//		a.logf("Database error while authenticating %v: %v", user.ID, err)
+		//		w.WriteHeader(http.StatusInternalServerError)
+		//		a.respond(w, jsonResponse(http.StatusInternalServerError, "error communicating with database"))
+		//		return
+		//	}
+		//
+		//	// log in user
+		//
+		//	// Check password with stored hash
+		//	if ok, err := comparePasswordHash(user.Password, userReq.Password); !ok {
+		//		a.logf("Incorrect password entered for %v", user.ID)
+		//		w.WriteHeader(http.StatusUnauthorized)
+		//		a.respond(w, jsonResponse(http.StatusUnauthorized, "incorrect password"))
+		//		return
+		//	} else if err != nil {
+		//		a.logf("Error comparing hash and password for %v: %v", user.ID, err)
+		//		w.WriteHeader(http.StatusInternalServerError)
+		//		a.respond(w, jsonResponse(http.StatusInternalServerError, "error validating password"))
+		//		return
+		//	}
+		//
+		//	// Sanitize user's password
+		//	user.Password = ""
+		//
+		//	// Create JWT
+		//	if err := a.createJWT(w, &user); err != nil {
+		//		a.logf("Error creating JWTs for %v: %v", user.ID, err)
+		//		w.WriteHeader(http.StatusInternalServerError)
+		//		a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating JWT"))
+		//		return
+		//	}
+		//
+		//	// Send back user info in response
+		//	resp := jsonResponse(http.StatusOK, fmt.Sprintf("User %v authenticated", user.ID))
+		//	resp["user"] = user
+		//
+		//	a.logf("User %v has been logged in", user.ID)
+		//	a.respond(w, resp)
+		//
 	}
 }
