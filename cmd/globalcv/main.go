@@ -2,19 +2,24 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"strconv"
+	"time"
 
 	"globalcv/globalcv"
 )
 
 func main() {
+	// Get debug env var
 	debug, err := strconv.ParseBool(os.Getenv("debug"))
 	if err != nil {
 		log.Println("Error getting debug environment variable")
 	}
+
+	// Create new globalcv API
 	a, err := globalcv.New(globalcv.Options{
 		Addr:   os.Getenv("addr"),
 		DBhost: os.Getenv("dbhost"),
@@ -34,13 +39,14 @@ func main() {
 		}
 	}()
 
-	// Handle server interrupts
-	done := make(chan bool)
+	// Handle server interrupts\
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	go func() {
 		<-quit
-		a.Logger.Println("Server is shutting down...")
+
+		fmt.Println()
+		a.Logger.Println("globalcv API is shutting down...")
 
 		ctx, cancel := context.WithTimeout(context.Background(), a.Server.WriteTimeout)
 		defer cancel()
@@ -49,13 +55,20 @@ func main() {
 		if err := a.Server.Shutdown(ctx); err != nil {
 			a.Logger.Fatalf("Could not gracefully shutdown the server: %v", err)
 		}
-		close(done)
+
+		// verify, in worst case call cancel via defer
+		select {
+		case <-time.After(a.Server.WriteTimeout):
+			a.Logger.Println("not all connections to server were gracefully closed")
+			os.Exit(1)
+		case <-ctx.Done():
+			a.Logger.Println("globalcv API successfully shutdown")
+			os.Exit(0)
+		}
 	}()
 
 	// Start the server
 	if err = a.Run(); err != nil {
-		a.Logger.Fatalf("Error running resume server: %v", err)
+		a.Logger.Fatalf("Error running globalcv API: %v", err)
 	}
-
-	<-done
 }

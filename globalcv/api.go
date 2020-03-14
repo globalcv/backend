@@ -1,9 +1,13 @@
 package globalcv
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/docgen"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -71,8 +75,19 @@ func New(options ...Options) (*API, error) {
 		return nil, err
 	}
 
-	// Init Chi Router
+	// Init Chi Routes
 	newAPI.InitRoutes()
+
+	// Generate routes documentation
+	if newAPI.Options.Debug {
+		mdGen := docgen.MarkdownRoutesDoc(newAPI.Router, docgen.MarkdownOpts{
+			ProjectPath: "github.com/globalcv/backend",
+			Intro:       "globalcv Backend Routes",
+		})
+		if err := ioutil.WriteFile("../../routes.md", []byte(mdGen), os.ModePerm); err != nil {
+			newAPI.logf("error generating routes documentation")
+		}
+	}
 
 	// Init Server
 	if err := newAPI.initServer(); err != nil {
@@ -85,6 +100,7 @@ func New(options ...Options) (*API, error) {
 			return []byte(os.Getenv("jwt_secret")), nil
 		},
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+			newAPI.logf("JWT error: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			newAPI.respond(w, jsonResponse(http.StatusInternalServerError, err.Error()))
 		},
@@ -104,18 +120,20 @@ func (a *API) Run() error {
 }
 
 func (a *API) initServer() error {
+	ctx := context.Background()
 	// Best practice to set timeouts to avoid Slowloris attacks.
 	a.Server = &http.Server{
 		Addr:         a.Options.Addr,
-		WriteTimeout: time.Second * 10,
-		ReadTimeout:  time.Second * 5,
-		IdleTimeout:  time.Second * 10,
-		Handler:      a.Router,
+		ReadTimeout:  time.Second * 10,
+		WriteTimeout: time.Second * 20,
+		IdleTimeout:  time.Second * 30,
+		Handler:      chi.ServerBaseContext(ctx, a.Router),
 	}
 	// Enable HTTP/2
 	if err := http2.ConfigureServer(a.Server, &http2.Server{}); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -168,6 +186,8 @@ func (a *API) respond(w http.ResponseWriter, data interface{}) {
 	// Basic headers
 	w.Header().Set("Accept-Charset", "utf-8")
 	w.Header().Set("Content-Type", "application/json")
+	// CSP
+	w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; img-src 'self';")
 	// Clickjack headers
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("X-XSS-Protection", "1; mode=block")
@@ -185,7 +205,7 @@ func (a *API) respond(w http.ResponseWriter, data interface{}) {
 	}, ", "))
 	w.Header().Set("Access-Control-Allow-Headers",
 		"Accept, Content-Type, Content-Length, Accept-Encoding, Authorization")
-	w.Header().Set("Vary", "Accept-Encoding, Accept")
+	w.Header().Set("Vary", "Accept-Encoding")
 
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		a.Logger.Println(err)

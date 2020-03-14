@@ -28,26 +28,33 @@ func (a *API) listResumes(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) createResume(w http.ResponseWriter, r *http.Request) {
-	var resume Resume
-	if err := json.NewDecoder(r.Body).Decode(&resume); err != nil {
-		a.logf("error decoding request: %v", err)
-		a.respond(w, jsonResponse(http.StatusBadRequest, "Bad request"))
+	ctx := r.Context()
+	select {
+	case <-ctx.Done():
+		a.logf("request cancelled due to context Done() signal")
 		return
+	default:
+		var resume Resume
+		if err := json.NewDecoder(r.Body).Decode(&resume); err != nil {
+			a.logf("error decoding request: %v", err)
+			a.respond(w, jsonResponse(http.StatusBadRequest, "Bad request"))
+			return
+		}
+
+		// Upload resume file
+		uploadResume(&resume)
+
+		// Create the resume
+		if err := a.DB.Create(&resume).Error; err != nil {
+			a.logf("Unable to create resume %v: %v", resume.ID, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating resume"))
+			return
+		}
+
+		a.logf("Resume %v created", resume.ID)
+		a.respond(w, resume)
 	}
-
-	// Upload resume file
-	uploadResume(&resume)
-
-	// Create the resume
-	if err := a.DB.Create(&resume).Error; err != nil {
-		a.logf("Unable to create resume %v: %v", resume.ID, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating resume"))
-		return
-	}
-
-	a.logf("Resume %v created", resume.ID)
-	a.respond(w, resume)
 }
 
 func (a *API) getResume(w http.ResponseWriter, r *http.Request) {

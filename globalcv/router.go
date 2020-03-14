@@ -10,19 +10,16 @@ import (
 func (a *API) InitRoutes() {
 	// Create new router
 	a.Router = chi.NewRouter()
-
 	// A good base middleware stack
 	a.Router.Use(middleware.RequestID)
 	a.Router.Use(middleware.RealIP)
 	a.Router.Use(middleware.Logger)
 	a.Router.Use(middleware.Recoverer)
 	a.Router.Use(middleware.DefaultCompress)
-
 	// Set a timeout value on the request context (ctx), that will signal
 	// through ctx.Done() that the request has timed out and further
 	// processing should be stopped.
 	a.Router.Use(middleware.Timeout(30 * time.Second))
-
 	// Register Routes
 	a.userRoutes()
 	a.resumeRoutes()
@@ -37,7 +34,6 @@ func (a *API) userRoutes() {
 
 		r.Group(func(r chi.Router) {
 			r.Use(a.JWTMiddleware.Handler)
-
 			r.Post("/logout", a.logout) // POST /users/logout - log out an authenticated user
 		})
 
@@ -45,7 +41,6 @@ func (a *API) userRoutes() {
 			r.Get("/", a.getUserByID)    // GET /users/{id}   - get a single user by id
 			r.Group(func(r chi.Router) { // Protected routes that require authorization
 				r.Use(a.JWTMiddleware.Handler)
-
 				r.Patch("/", a.updateUser)  // PATCH  /users/{id} - update a single user by id
 				r.Delete("/", a.deleteUser) // DELETE /users/{id} - delete a single user by id
 			})
@@ -78,13 +73,11 @@ func (a *API) resumeRoutes() {
 		r.Get("/", a.listResumes)    // GET    /resumes      - list all resumes
 		r.Group(func(r chi.Router) { // User needs to be authenticated to create resume
 			r.Use(a.JWTMiddleware.Handler)
-
 			r.Post("/", a.createResume) // POST   /resumes      - create a new resume
 		})
 		r.Route("/{resumeID:[0-9]+}", func(r chi.Router) {
 			r.Group(func(r chi.Router) { // Protected routes that require authorization
 				r.Use(a.JWTMiddleware.Handler)
-
 				r.Get("/", a.getResume)       // GET    /resumes/{id} - get a single resume by id
 				r.Patch("/", a.updateResume)  // PATCH  /resumes/{id} - update a single resume by id
 				r.Delete("/", a.deleteResume) // DELETE /resumes/{id} - delete a single resume by id

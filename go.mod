@@ -7,6 +7,7 @@ require (
 	github.com/ciehanski/go-jwt-middleware v1.0.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-chi/chi v4.0.3+incompatible
+	github.com/go-chi/docgen v1.0.5
 	github.com/google/uuid v1.1.1
 	github.com/jinzhu/gorm v1.9.12
 	github.com/natefinch/lumberjack v2.0.0+incompatible
