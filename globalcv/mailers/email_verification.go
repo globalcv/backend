@@ -1,11 +1,12 @@
 package mailers
 
 import (
+	"globalcv/globalcv"
 	"log"
 	"net/smtp"
 )
 
-func sendVerificationEmail(user *User) {
+func sendVerificationEmail(user *globalcv.User) {
 	// Set up authentication information.
 	auth := smtp.PlainAuth(
 		"",

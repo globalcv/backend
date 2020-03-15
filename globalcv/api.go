@@ -173,7 +173,7 @@ func jsonResponse(status int, message string) map[string]interface{} {
 // with the necessary response headers
 func (a *API) respond(w http.ResponseWriter, status int, data interface{}, log string, logArgs ...interface{}) {
 	// Log the response
-	a.logf(log, logArgs)
+	a.logf(log, logArgs...)
 	// Write status header
 	w.WriteHeader(status)
 	// Basic headers
