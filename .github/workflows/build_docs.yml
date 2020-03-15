@@ -34,6 +34,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git add docs/index.html
           git commit -m "Add changes" -a
 
       - name: Push Documentation Changes
@@ -42,7 +43,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Documentation Artifact
-        if: success()
+        if: success() || failure()
         uses: actions/upload-artifact@v1.0.0
         with:
           name: globalcv_docs.html
