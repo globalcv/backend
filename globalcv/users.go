@@ -126,9 +126,7 @@ func (a *API) createUser(w http.ResponseWriter, r *http.Request) {
 		user.Password = "" // Sanitize user's password
 
 		// Send back response
-		resp := jsonResponse(http.StatusCreated, fmt.Sprintf("User %v created", user.ID))
-		resp["user"] = user
-		a.respond(w, http.StatusCreated, resp, "User %v created", user.ID)
+		a.respond(w, http.StatusCreated, user, "User %v created", user.ID)
 	}
 }
 
@@ -279,9 +277,7 @@ func (a *API) login(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Send back user info in response
-		resp := jsonResponse(http.StatusOK, fmt.Sprintf("User %v authenticated", user.ID))
-		resp["user"] = user
-		a.respond(w, http.StatusOK, resp, "User %v has been logged in", user.ID)
+		a.respond(w, http.StatusOK, user, "User %v has been logged in", user.ID)
 	}
 }
 
@@ -426,7 +422,6 @@ func (a *API) refreshToken(w http.ResponseWriter, r *http.Request) {
 		a.logf("request cancelled due to context Done() signal")
 		return
 	default:
-		// Grab URL params
 		id := chi.URLParam(r, "userID")
 
 		// Grab refresh cookie and parse it

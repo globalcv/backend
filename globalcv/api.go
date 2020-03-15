@@ -2,12 +2,10 @@ package globalcv
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/docgen"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -16,10 +14,11 @@ import (
 
 	"github.com/ciehanski/go-jwt-middleware"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/go-chi/chi"
 	"github.com/jinzhu/gorm"
-	// Postgres Driver
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/natefinch/lumberjack"
+	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/net/http2"
 )
 
@@ -68,17 +67,6 @@ func New(options ...Options) (*API, error) {
 	// Init Chi Routes
 	newAPI.InitRoutes()
 
-	// Generate routes documentation
-	if newAPI.Options.Debug {
-		mdGen := docgen.MarkdownRoutesDoc(newAPI.Router, docgen.MarkdownOpts{
-			ProjectPath: "github.com/globalcv/backend",
-			Intro:       "globalcv Backend Routes",
-		})
-		if err := ioutil.WriteFile("../../routes.md", []byte(mdGen), os.ModePerm); err != nil {
-			newAPI.logf("error generating routes documentation")
-		}
-	}
-
 	// Init Server
 	if err := newAPI.initServer(); err != nil {
 		return nil, err
@@ -104,8 +92,13 @@ func New(options ...Options) (*API, error) {
 }
 
 func (a *API) Run() error {
-	a.Logger.Println(fmt.Sprintf("Server is listening at: %s", a.Options.Addr))
-	return a.Server.ListenAndServe()
+	if a.Options.Debug {
+		a.Logger.Println(fmt.Sprintf("Server is listening at: %s", a.Options.Addr))
+		return a.Server.ListenAndServe()
+	} else {
+		a.Logger.Println(fmt.Sprintf("Server is listening at: %s", a.Options.Addr))
+		return a.Server.ListenAndServeTLS("", "")
+	}
 }
 
 func (a *API) initServer() error {
@@ -122,7 +115,22 @@ func (a *API) initServer() error {
 	if err := http2.ConfigureServer(a.Server, &http2.Server{}); err != nil {
 		return err
 	}
-
+	// Get certificate if prod
+	if !a.Options.Debug {
+		cert := &autocert.Manager{
+			Prompt: autocert.AcceptTOS,
+			HostPolicy: func(ctx context.Context, host string) error {
+				allowedHost := "globalcv.io"
+				if host == allowedHost {
+					return nil
+				}
+				return fmt.Errorf("acme/autocert: only %s host is allowed", allowedHost)
+			},
+			Cache: autocert.DirCache("."),
+		}
+		a.Server.Addr = ":443"
+		a.Server.TLSConfig = &tls.Config{GetCertificate: cert.GetCertificate}
+	}
 	return nil
 }
 
@@ -164,11 +172,6 @@ func (a *API) logf(format string, args ...interface{}) {
 	}
 }
 
-// jsonResponse builds a map containing the response's status and error message
-func jsonResponse(status int, message string) map[string]interface{} {
-	return map[string]interface{}{"status": status, "message": message}
-}
-
 // respond takes any interface and spits it out in JSON format
 // with the necessary response headers
 func (a *API) respond(w http.ResponseWriter, status int, data interface{}, log string, logArgs ...interface{}) {
@@ -199,7 +202,7 @@ func (a *API) respond(w http.ResponseWriter, status int, data interface{}, log s
 	w.Header().Set("Access-Control-Allow-Headers",
 		"Accept, Content-Type, Content-Length, Accept-Encoding, Authorization")
 	w.Header().Set("Vary", "Accept-Encoding")
-
+	// Encode and send the response
 	if err := json.NewEncoder(w).Encode(map[string]interface{}{"status": status, "message": data}); err != nil {
 		a.Logger.Println(err)
 	}
