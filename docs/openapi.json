@@ -29,12 +29,12 @@
     "/users" : {
       "get" : {
         "tags" : [ "developers" ],
-        "summary" : "retrives all users",
+        "summary" : "retrive all users",
         "operationId" : "listUsers",
         "description" : "Retrieves all users.",
         "responses" : {
           "200" : {
-            "description" : "search results matching criteria",
+            "description" : "all globalcv users",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -47,15 +47,18 @@
             }
           },
           "400" : {
-            "description" : "bad input parameter"
+            "description" : "bad request"
+          },
+          "500" : {
+            "description" : "internal server error"
           }
         }
       },
       "post" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "creates a user",
+        "summary" : "create a user",
         "operationId" : "createUser",
-        "description" : "Creates a new globalcv user.                  \n",
+        "description" : "Creates a new globalcv user.",
         "parameters" : [ {
           "in" : "path",
           "name" : "email",
@@ -86,6 +89,9 @@
           },
           "400" : {
             "description" : "bad request"
+          },
+          "500" : {
+            "description" : "internal server error"
           }
         },
         "requestBody" : {
@@ -96,16 +102,16 @@
               }
             }
           },
-          "description" : "User"
+          "description" : "A globalcv user"
         }
       }
     },
     "/users/{id}" : {
       "get" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "retrieves a user",
+        "summary" : "retrieve a user",
         "operationId" : "getUserByID",
-        "description" : "retrieves a user",
+        "description" : "Retrieves a globalcv user.",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -119,14 +125,20 @@
         "responses" : {
           "200" : {
             "description" : "worked!"
+          },
+          "400" : {
+            "description" : "bad request"
+          },
+          "500" : {
+            "description" : "internal server error"
           }
         }
       },
       "patch" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "updates user settings",
+        "summary" : "update a user's settings",
         "operationId" : "updateUser",
-        "description" : "updates user settings",
+        "description" : "Updates a globalcv user's settings.",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -139,14 +151,20 @@
         "responses" : {
           "200" : {
             "description" : "worked!"
+          },
+          "400" : {
+            "description" : "bad request"
+          },
+          "500" : {
+            "description" : "internal server error"
           }
         }
       },
       "delete" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "deletes a user",
+        "summary" : "delete a user",
         "operationId" : "deleteUser",
-        "description" : "Deletes a globalcv User.",
+        "description" : "Deletes a globalcv user.",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -159,6 +177,12 @@
         "responses" : {
           "200" : {
             "description" : "worked!"
+          },
+          "400" : {
+            "description" : "bad request"
+          },
+          "500" : {
+            "description" : "internal server error"
           }
         }
       }
@@ -166,9 +190,9 @@
     "/users/login" : {
       "post" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "logs in a user",
+        "summary" : "log in a user",
         "operationId" : "loginUser",
-        "description" : "logs in a user",
+        "description" : "Logs in a globalcv user.",
         "parameters" : [ {
           "in" : "path",
           "name" : "email",
@@ -189,6 +213,12 @@
         "responses" : {
           "200" : {
             "description" : "worked!"
+          },
+          "400" : {
+            "description" : "bad request"
+          },
+          "500" : {
+            "description" : "internal server error"
           }
         }
       }
@@ -196,12 +226,18 @@
     "/users/logout" : {
       "post" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "logs out a user",
+        "summary" : "log out the currently signed in user",
         "operationId" : "logoutUser",
-        "description" : "logs out a user",
+        "description" : "Logs out the currently signed in globalcv user.\n",
         "responses" : {
           "200" : {
             "description" : "hehe"
+          },
+          "400" : {
+            "description" : "bad request"
+          },
+          "500" : {
+            "description" : "internal server error"
           }
         }
       }
@@ -209,9 +245,9 @@
     "/resumes" : {
       "get" : {
         "tags" : [ "developers" ],
-        "summary" : "retrieves all resumes",
+        "summary" : "retrieve all resumes",
         "operationId" : "listResumes",
-        "description" : "Retrieves all resumes.      \n",
+        "description" : "Retrieves all resumes.",
         "responses" : {
           "200" : {
             "description" : "search results matching criteria",
@@ -227,13 +263,16 @@
             }
           },
           "400" : {
-            "description" : "bad input parameter"
+            "description" : "bad request"
+          },
+          "500" : {
+            "description" : "internal server error"
           }
         }
       },
       "post" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "creates a resume",
+        "summary" : "create a resume",
         "operationId" : "createResume",
         "description" : "Creates a resume for a globalcv user.",
         "parameters" : [ {
@@ -261,6 +300,9 @@
           },
           "400" : {
             "description" : "bad request"
+          },
+          "500" : {
+            "description" : "internal server error"
           }
         },
         "requestBody" : {
@@ -278,9 +320,9 @@
     "/resumes/{id}" : {
       "get" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "retrieves a resume",
+        "summary" : "retrieve a resume",
         "operationId" : "getResume",
-        "description" : "retrieves a resume",
+        "description" : "Retrieves a globalcv resume.",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -293,6 +335,12 @@
         "responses" : {
           "200" : {
             "description" : "worked!"
+          },
+          "400" : {
+            "description" : "bad request"
+          },
+          "500" : {
+            "description" : "internal server error"
           }
         }
       },
@@ -300,7 +348,7 @@
         "tags" : [ "developers", "users" ],
         "summary" : "update resume settings",
         "operationId" : "updateResume",
-        "description" : "update resume settings",
+        "description" : "Updates a resumes settings.",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -312,14 +360,20 @@
         "responses" : {
           "200" : {
             "description" : "worked!"
+          },
+          "400" : {
+            "description" : "bad request"
+          },
+          "500" : {
+            "description" : "internal server error"
           }
         }
       },
       "delete" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "deletes a resume",
+        "summary" : "delete a resume",
         "operationId" : "deleteResume",
-        "description" : "deletes a resume",
+        "description" : "Deletes a globalcv resume.",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -331,6 +385,12 @@
         "responses" : {
           "200" : {
             "description" : "worked!"
+          },
+          "400" : {
+            "description" : "bad request"
+          },
+          "500" : {
+            "description" : "internal server error"
           }
         }
       }
