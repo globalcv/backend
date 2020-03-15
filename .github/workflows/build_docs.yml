@@ -28,6 +28,7 @@ jobs:
         run: |
           cd docs
           npx redoc-cli bundle openapi.json
+          mv redoc-static.html index.html
           cd ..
 
       - name: Commit Documentation Changes
