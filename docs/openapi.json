@@ -242,11 +242,11 @@
         }
       }
     },
-    "/users/me" : {
+    "/users/whoami" : {
       "get" : {
         "tags" : [ "developers", "users" ],
         "summary" : "get logged in user",
-        "operationId" : "getCurrentUser",
+        "operationId" : "whoami",
         "description" : "Get currently logged in globalcv user from cookies.\n",
         "responses" : {
           "200" : {
