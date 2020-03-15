@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install npx
-        run: npm install -g npx
+        run: npm install -g npx --force
 
       - name: Generate Documentation
         run: |
