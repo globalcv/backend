@@ -1,4 +1,4 @@
-package globalcv
+package auth
 
 import (
 	"crypto/rand"
@@ -11,7 +11,16 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
-func hashPassword(password string) (string, error) {
+const (
+	// argon params
+	argonTime    = 1
+	argonThreads = 4
+	argonMemory  = 64 * 1024
+	argonKeyLen  = 32
+	argonSaltLen = 16
+)
+
+func HashPassword(password string) (string, error) {
 	salt := make([]byte, argonSaltLen)
 	_, err := rand.Read(salt)
 	if err != nil {
@@ -26,7 +35,7 @@ func hashPassword(password string) (string, error) {
 		argonMemory, argonTime, argonThreads, b64Salt, b64Hash), nil
 }
 
-func comparePasswordHash(expectedPassword, providedPassword string) (bool, error) {
+func ComparePasswordHash(expectedPassword, providedPassword string) (bool, error) {
 	vals := strings.Split(expectedPassword, "$")
 	if len(vals) != 6 {
 		return false, errors.New("invalid hash")

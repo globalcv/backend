@@ -1,4 +1,4 @@
-package globalcv
+package auth
 
 import (
 	"context"
@@ -42,19 +42,19 @@ var liOAuthConfig = &oauth2.Config{
 }
 
 func GitHubLogin(w http.ResponseWriter, r *http.Request) {
-	oauthState := generateOAuthState(w, GithubCookie)
+	oauthState := generateOAuthState(w, "github_oauth")
 	u := ghOAuthConfig.AuthCodeURL(oauthState)
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
 }
 
 func GitLabLogin(w http.ResponseWriter, r *http.Request) {
-	oauthState := generateOAuthState(w, GitLabCookie)
+	oauthState := generateOAuthState(w, "gitlab_oauth")
 	u := glOAuthConfig.AuthCodeURL(oauthState)
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
 }
 
 func LinkedInLogin(w http.ResponseWriter, r *http.Request) {
-	oauthState := generateOAuthState(w, LinkedInCookie)
+	oauthState := generateOAuthState(w, "linkedin_oauth")
 	u := liOAuthConfig.AuthCodeURL(oauthState)
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
 }
@@ -76,7 +76,7 @@ func generateOAuthState(w http.ResponseWriter, cookieName string) string {
 	return state
 }
 
-func getUserDataFromGitHub(code string) ([]byte, error) {
+func GetUserDataFromGitHub(code string) ([]byte, error) {
 	// Use code to get token and get user info from Google.
 	token, err := ghOAuthConfig.Exchange(context.Background(), code)
 	if err != nil {

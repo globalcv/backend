@@ -29,16 +29,6 @@ const (
 	refreshCookie = "refresh"
 	jwtIss        = "globalcv-backend"
 	jwtAud        = "globalcv-frontend"
-	// OAuth
-	GithubCookie   = "github_oauth"
-	GitLabCookie   = "gitlab_oauth"
-	LinkedInCookie = "linkedin_oauth"
-	// argon params
-	argonTime    = 1
-	argonThreads = 4
-	argonMemory  = 64 * 1024
-	argonKeyLen  = 32
-	argonSaltLen = 16
 )
 
 func New(options ...Options) (*API, error) {
@@ -100,9 +90,8 @@ func New(options ...Options) (*API, error) {
 			return []byte(os.Getenv("jwt_secret")), nil
 		},
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
-			newAPI.logf("JWT error: %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			newAPI.respond(w, jsonResponse(http.StatusInternalServerError, err.Error()))
+			newAPI.respond(w, http.StatusInternalServerError, err.Error(),
+				"JWT error: %v", err)
 		},
 		SigningMethod:       jwt.SigningMethodHS256,
 		Extractor:           jwtmiddleware.FromCookie(jwtCookie),
@@ -182,7 +171,11 @@ func jsonResponse(status int, message string) map[string]interface{} {
 
 // respond takes any interface and spits it out in JSON format
 // with the necessary response headers
-func (a *API) respond(w http.ResponseWriter, data interface{}) {
+func (a *API) respond(w http.ResponseWriter, status int, data interface{}, log string, logArgs ...interface{}) {
+	// Log the response
+	a.logf(log, logArgs)
+	// Write status header
+	w.WriteHeader(status)
 	// Basic headers
 	w.Header().Set("Accept-Charset", "utf-8")
 	w.Header().Set("Content-Type", "application/json")
@@ -207,7 +200,7 @@ func (a *API) respond(w http.ResponseWriter, data interface{}) {
 		"Accept, Content-Type, Content-Length, Accept-Encoding, Authorization")
 	w.Header().Set("Vary", "Accept-Encoding")
 
-	if err := json.NewEncoder(w).Encode(data); err != nil {
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{"status": status, "message": data}); err != nil {
 		a.Logger.Println(err)
 	}
 }

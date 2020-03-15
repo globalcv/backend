@@ -12,19 +12,16 @@ func (a *API) listResumes(w http.ResponseWriter, r *http.Request) {
 	var resumes []Resume
 	if err := a.DB.Table("resumes").Find(&resumes).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			a.logf("Unable to retrieve all resumes")
-			w.WriteHeader(http.StatusNotFound)
-			a.respond(w, jsonResponse(http.StatusNotFound, "unable to retrieve all resumes"))
+			a.respond(w, http.StatusNotFound, "unable to retrieve all resumes",
+				"Unable to retrieve all resumes")
 			return
 		}
-		a.logf("Database error while getting all resumes: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		a.respond(w, jsonResponse(http.StatusInternalServerError, "error communicating with database"))
+		a.respond(w, http.StatusInternalServerError, "error communicating with database",
+			"Database error while getting all resumes: %v", err)
 		return
 	}
 
-	a.logf("All resumes retrieved")
-	a.respond(w, resumes)
+	a.respond(w, http.StatusOK, resumes, "All resumes retrieved")
 }
 
 func (a *API) createResume(w http.ResponseWriter, r *http.Request) {
@@ -36,8 +33,8 @@ func (a *API) createResume(w http.ResponseWriter, r *http.Request) {
 	default:
 		var resume Resume
 		if err := json.NewDecoder(r.Body).Decode(&resume); err != nil {
-			a.logf("error decoding request: %v", err)
-			a.respond(w, jsonResponse(http.StatusBadRequest, "Bad request"))
+			a.respond(w, http.StatusBadRequest, "Bad request",
+				"error decoding request: %v", err)
 			return
 		}
 
@@ -46,14 +43,12 @@ func (a *API) createResume(w http.ResponseWriter, r *http.Request) {
 
 		// Create the resume
 		if err := a.DB.Create(&resume).Error; err != nil {
-			a.logf("Unable to create resume %v: %v", resume.ID, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			a.respond(w, jsonResponse(http.StatusInternalServerError, "error creating resume"))
+			a.respond(w, http.StatusInternalServerError, "error creating resume",
+				"Unable to create resume %v: %v", resume.ID, err)
 			return
 		}
 
-		a.logf("Resume %v created", resume.ID)
-		a.respond(w, resume)
+		a.respond(w, http.StatusOK, resume, "Resume %v created", resume.ID)
 	}
 }
 
@@ -63,19 +58,16 @@ func (a *API) getResume(w http.ResponseWriter, r *http.Request) {
 	var resume Resume
 	if err := a.DB.Table("resumes").Where("id = ?", id).First(&resume).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			a.logf("Resume %v not found", id)
-			w.WriteHeader(http.StatusNotFound)
-			a.respond(w, jsonResponse(http.StatusNotFound, "resume not found"))
+			a.respond(w, http.StatusNotFound, "resume not found",
+				"Resume %v not found", id)
 			return
 		}
-		a.logf("Database error while getting %v: %v", resume.ID, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		a.respond(w, jsonResponse(http.StatusInternalServerError, "error communicating with database"))
+		a.respond(w, http.StatusInternalServerError, "error communicating with database",
+			"Database error while getting %v: %v", resume.ID, err)
 		return
 	}
 
-	a.logf("Resume %v retrieved by ID", resume.ID)
-	a.respond(w, resume)
+	a.respond(w, http.StatusOK, resume, "Resume %v retrieved by ID", resume.ID)
 }
 
 func (a *API) updateResume(w http.ResponseWriter, r *http.Request) {

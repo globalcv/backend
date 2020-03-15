@@ -1,11 +1,12 @@
 package globalcv
 
 import (
-	jwtmiddleware "github.com/ciehanski/go-jwt-middleware"
-	"github.com/go-chi/chi"
-	"github.com/jinzhu/gorm"
 	"log"
 	"net/http"
+
+	"github.com/ciehanski/go-jwt-middleware"
+	"github.com/go-chi/chi"
+	"github.com/jinzhu/gorm"
 )
 
 type API struct {
@@ -35,7 +36,7 @@ type User struct {
 	EmailLogin       bool     `gorm:"type:boolean" json:"email_login,omitempty"`
 	Email            string   `gorm:"type:varchar(255);not null;unique;unique_index:idx_user_by_email" json:"email"`
 	EmailConfirmed   bool     `gorm:"type:boolean;not null" json:"email_confirmed"`
-	GcvID            string   `gorm:"type:varchar(255);not null;unique;unique_index:idx_user_by_gcvID" json:"gcv_id"`
+	GcvID            string   `gorm:"type:varchar(255);not null;unique;unique_index:idx_user_by_gcvid" json:"gcv_id"`
 	Password         string   `gorm:"type:varchar(255);not null" json:"password,omitempty"`
 	Avatar           string   `gorm:"type:varchar(255)" json:"avatar"`
 	GravatarID       string   `gorm:"type:varchar(255)" json:"gravatar_id"`

@@ -1,4 +1,4 @@
-package globalcv
+package mailers
 
 import (
 	"log"
