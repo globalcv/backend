@@ -35,7 +35,7 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add docs/index.html
-          git commit -m "Add changes" -a
+          git commit -m "Automagically generated API documentation" -a
 
       - name: Push Documentation Changes
         uses: ad-m/github-push-action@master
