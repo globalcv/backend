@@ -22,6 +22,7 @@ import (
 )
 
 func (a *API) listUsers(w http.ResponseWriter, r *http.Request) {
+	// Only if admin
 	var users []User
 	if err := a.DB.Table("users").Find(&users).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
