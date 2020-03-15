@@ -226,7 +226,7 @@
     "/users/logout" : {
       "post" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "log out the currently signed in user",
+        "summary" : "log out current user",
         "operationId" : "logoutUser",
         "description" : "Logs out the currently signed in globalcv user.\n",
         "responses" : {
