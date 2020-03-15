@@ -242,6 +242,25 @@
         }
       }
     },
+    "/users/me" : {
+      "get" : {
+        "tags" : [ "developers", "users" ],
+        "summary" : "get logged in user",
+        "operationId" : "getCurrentUser",
+        "description" : "Get currently logged in globalcv user from cookies.\n",
+        "responses" : {
+          "200" : {
+            "description" : "hehe"
+          },
+          "400" : {
+            "description" : "bad request"
+          },
+          "500" : {
+            "description" : "internal server error"
+          }
+        }
+      }
+    },
     "/resumes" : {
       "get" : {
         "tags" : [ "developers" ],
