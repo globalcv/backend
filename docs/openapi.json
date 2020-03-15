@@ -231,7 +231,7 @@
         "description" : "Logs out the currently signed in globalcv user.\n",
         "responses" : {
           "200" : {
-            "description" : "hehe"
+            "description" : "worked!"
           },
           "400" : {
             "description" : "bad request"
@@ -250,7 +250,7 @@
         "description" : "Get currently logged in globalcv user from cookies.\n",
         "responses" : {
           "200" : {
-            "description" : "hehe"
+            "description" : "worked!"
           },
           "400" : {
             "description" : "bad request"
