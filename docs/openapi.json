@@ -55,7 +55,7 @@
         "tags" : [ "developers", "users" ],
         "summary" : "creates a user",
         "operationId" : "createUser",
-        "description" : "Creates a new globalcv use.                  \n",
+        "description" : "Creates a new globalcv user.                  \n",
         "parameters" : [ {
           "in" : "path",
           "name" : "email",
