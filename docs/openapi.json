@@ -625,10 +625,12 @@
         "type" : "object",
         "properties" : {
           "code" : {
-            "type" : "integer"
+            "type" : "integer",
+            "example" : 200
           },
           "message" : {
-            "type" : "string"
+            "type" : "string",
+            "example" : "user successfully deleted"
           }
         },
         "required" : [ "code", "message" ]
