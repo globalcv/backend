@@ -47,10 +47,37 @@
             }
           },
           "400" : {
-            "description" : "bad request"
+            "description" : "bad request",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Bad request"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "unauthorized",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Unauthorized"
+                }
+              }
+            }
           },
           "500" : {
-            "description" : "internal server error"
+            "description" : "bad request",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Internal server error"
+                }
+              }
+            }
           }
         }
       },
@@ -88,21 +115,27 @@
             }
           },
           "400" : {
-            "description" : "bad request"
-          },
-          "500" : {
-            "description" : "internal server error"
-          }
-        },
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/User"
+            "description" : "bad request",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "bad request"
+                }
               }
             }
           },
-          "description" : "A globalcv user"
+          "500" : {
+            "description" : "internal server error",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "internal server error"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -124,13 +157,47 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "returns the requested user",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            }
           },
           "400" : {
-            "description" : "bad request"
+            "description" : "bad request",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Bad request"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "unauthorized",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Unauthorized"
+                }
+              }
+            }
           },
           "500" : {
-            "description" : "internal server error"
+            "description" : "internal server error",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Internal server error"
+                }
+              }
+            }
           }
         }
       },
@@ -150,13 +217,47 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "returns the updated user",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            }
           },
           "400" : {
-            "description" : "bad request"
+            "description" : "bad request",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Bad request"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "unauthorized",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Unauthorized"
+                }
+              }
+            }
           },
           "500" : {
-            "description" : "internal server error"
+            "description" : "internal server error",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Internal server error"
+                }
+              }
+            }
           }
         }
       },
@@ -176,13 +277,40 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "user successfully deleted"
           },
           "400" : {
-            "description" : "bad request"
+            "description" : "bad request",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Bad request"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "unauthorized",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Unauthorized"
+                }
+              }
+            }
           },
           "500" : {
-            "description" : "internal server error"
+            "description" : "internal server error",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Internal server error"
+                }
+              }
+            }
           }
         }
       }
@@ -212,13 +340,47 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "returns the logged in user",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            }
           },
           "400" : {
-            "description" : "bad request"
+            "description" : "bad request",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Bad request"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "unauthorized",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Unauthorized"
+                }
+              }
+            }
           },
           "500" : {
-            "description" : "internal server error"
+            "description" : "internal server error",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string",
+                  "example" : "Internal server error"
+                }
+              }
+            }
           }
         }
       }
@@ -250,10 +412,13 @@
         "description" : "Get currently logged in globalcv user from cookies.\n",
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "user successfully logged out"
           },
           "400" : {
             "description" : "bad request"
+          },
+          "401" : {
+            "description" : "unauthorized"
           },
           "500" : {
             "description" : "internal server error"
@@ -283,6 +448,9 @@
           },
           "400" : {
             "description" : "bad request"
+          },
+          "401" : {
+            "description" : "unauthorized"
           },
           "500" : {
             "description" : "internal server error"
@@ -315,24 +483,24 @@
         } ],
         "responses" : {
           "201" : {
-            "description" : "resume successfully created"
+            "description" : "resume successfully created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Resume"
+                }
+              }
+            }
           },
           "400" : {
             "description" : "bad request"
           },
+          "401" : {
+            "description" : "unauthorized"
+          },
           "500" : {
             "description" : "internal server error"
           }
-        },
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/Resume"
-              }
-            }
-          },
-          "description" : "User resume"
         }
       }
     },
@@ -353,10 +521,20 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "returns the requested resume",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            }
           },
           "400" : {
             "description" : "bad request"
+          },
+          "401" : {
+            "description" : "unauthorized"
           },
           "500" : {
             "description" : "internal server error"
@@ -378,10 +556,20 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "returns updated resume",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Resume"
+                }
+              }
+            }
           },
           "400" : {
             "description" : "bad request"
+          },
+          "401" : {
+            "description" : "unauthorized"
           },
           "500" : {
             "description" : "internal server error"
@@ -403,10 +591,13 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "resume successfully deleted"
           },
           "400" : {
             "description" : "bad request"
+          },
+          "401" : {
+            "description" : "unauthorized"
           },
           "500" : {
             "description" : "internal server error"
