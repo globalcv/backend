@@ -1,11 +1,11 @@
 {
   "openapi" : "3.0.0",
   "servers" : [ {
-    "description" : "SwaggerHub API Auto Mocking",
-    "url" : "https://virtserver.swaggerhub.com/ciehanski/globalcv/v1"
-  }, {
     "url" : "https://api.globalcv.io/v1",
     "description" : "globalcv API endpoint."
+  }, {
+    "description" : "SwaggerHub API Auto Mocking",
+    "url" : "https://virtserver.swaggerhub.com/ciehanski/globalcv/v1"
   } ],
   "info" : {
     "description" : "We make resumes easy.",
