@@ -31,7 +31,7 @@
         "tags" : [ "developers" ],
         "summary" : "retrieve all users",
         "operationId" : "listUsers",
-        "description" : "Retrieves all globalcv users.",
+        "description" : "Returns all globalcv users.",
         "responses" : {
           "200" : {
             "description" : "all globalcv users",
@@ -269,7 +269,7 @@
         "description" : "Logs out the currently signed in globalcv user.\n",
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "user successfully logged out"
           },
           "400" : {
             "$ref" : "#/components/responses/BadRequest"
@@ -285,7 +285,7 @@
         "tags" : [ "developers", "users" ],
         "summary" : "get logged in user & refresh tokens",
         "operationId" : "whoami",
-        "description" : "Returns the currently logged in globalcv user from cookies and refreshes their tokens. To be called on a new session or after current session is about to expire.",
+        "description" : "Returns the currently logged in globalcv user from cookies and refreshes their tokens. To be called on a new session or before current session is about to expire.",
         "responses" : {
           "200" : {
             "description" : "user successfully logged out"
@@ -343,9 +343,9 @@
           "name" : "user",
           "required" : true,
           "schema" : {
-            "type" : "string",
-            "format" : "integer",
-            "example" : "5"
+            "type" : "integer",
+            "example" : 3,
+            "minimum" : 1
           }
         }, {
           "in" : "path",
@@ -392,6 +392,7 @@
           "required" : true,
           "schema" : {
             "type" : "integer",
+            "example" : 3,
             "minimum" : 1
           }
         } ],
@@ -430,7 +431,9 @@
           "name" : "id",
           "required" : true,
           "schema" : {
-            "type" : "integer"
+            "type" : "integer",
+            "example" : 3,
+            "minimum" : 1
           }
         } ],
         "responses" : {
@@ -468,7 +471,9 @@
           "name" : "id",
           "required" : true,
           "schema" : {
-            "type" : "integer"
+            "type" : "integer",
+            "example" : 3,
+            "minimum" : 1
           }
         } ],
         "responses" : {
@@ -544,8 +549,8 @@
         "required" : [ "email", "password" ],
         "properties" : {
           "id" : {
-            "type" : "string",
-            "example" : "1"
+            "type" : "integer",
+            "example" : 1
           },
           "gcvid" : {
             "type" : "string",
