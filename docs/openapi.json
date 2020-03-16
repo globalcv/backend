@@ -29,9 +29,9 @@
     "/users" : {
       "get" : {
         "tags" : [ "developers" ],
-        "summary" : "retrive all users",
+        "summary" : "retrieve all users",
         "operationId" : "listUsers",
-        "description" : "Retrieves all users.",
+        "description" : "Retrieves all globalcv users.",
         "responses" : {
           "200" : {
             "description" : "all globalcv users",
@@ -47,37 +47,13 @@
             }
           },
           "400" : {
-            "description" : "bad request",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Bad request"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/BadRequest"
           },
           "401" : {
-            "description" : "unauthorized",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Unauthorized"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/Unauthorized"
           },
           "500" : {
-            "description" : "bad request",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Internal server error"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       },
@@ -115,26 +91,10 @@
             }
           },
           "400" : {
-            "description" : "bad request",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "bad request"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/BadRequest"
           },
           "500" : {
-            "description" : "internal server error",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "internal server error"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       }
@@ -167,37 +127,16 @@
             }
           },
           "400" : {
-            "description" : "bad request",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Bad request"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/BadRequest"
           },
           "401" : {
-            "description" : "unauthorized",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Unauthorized"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
           },
           "500" : {
-            "description" : "internal server error",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Internal server error"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       },
@@ -227,37 +166,16 @@
             }
           },
           "400" : {
-            "description" : "bad request",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Bad request"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/BadRequest"
           },
           "401" : {
-            "description" : "unauthorized",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Unauthorized"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
           },
           "500" : {
-            "description" : "internal server error",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Internal server error"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       },
@@ -280,37 +198,16 @@
             "description" : "user successfully deleted"
           },
           "400" : {
-            "description" : "bad request",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Bad request"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/BadRequest"
           },
           "401" : {
-            "description" : "unauthorized",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Unauthorized"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
           },
           "500" : {
-            "description" : "internal server error",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Internal server error"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       }
@@ -350,37 +247,16 @@
             }
           },
           "400" : {
-            "description" : "bad request",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Bad request"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/BadRequest"
           },
           "401" : {
-            "description" : "unauthorized",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Unauthorized"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
           },
           "500" : {
-            "description" : "internal server error",
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string",
-                  "example" : "Internal server error"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       }
@@ -396,10 +272,10 @@
             "description" : "worked!"
           },
           "400" : {
-            "description" : "bad request"
+            "$ref" : "#/components/responses/BadRequest"
           },
           "500" : {
-            "description" : "internal server error"
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       }
@@ -407,21 +283,21 @@
     "/users/whoami" : {
       "get" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "get logged in user",
+        "summary" : "get logged in user & refresh tokens",
         "operationId" : "whoami",
-        "description" : "Get currently logged in globalcv user from cookies.\n",
+        "description" : "Returns the currently logged in globalcv user from cookies and refreshes their tokens. To be called on a new session or after current session is about to expire.",
         "responses" : {
           "200" : {
             "description" : "user successfully logged out"
           },
           "400" : {
-            "description" : "bad request"
+            "$ref" : "#/components/responses/BadRequest"
           },
           "401" : {
-            "description" : "unauthorized"
+            "$ref" : "#/components/responses/Unauthorized"
           },
           "500" : {
-            "description" : "internal server error"
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       }
@@ -431,10 +307,10 @@
         "tags" : [ "developers" ],
         "summary" : "retrieve all resumes",
         "operationId" : "listResumes",
-        "description" : "Retrieves all resumes.",
+        "description" : "Retrieves all globalcv resumes.",
         "responses" : {
           "200" : {
-            "description" : "search results matching criteria",
+            "description" : "returns all resumes",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -447,13 +323,13 @@
             }
           },
           "400" : {
-            "description" : "bad request"
+            "$ref" : "#/components/responses/BadRequest"
           },
           "401" : {
-            "description" : "unauthorized"
+            "$ref" : "#/components/responses/Unauthorized"
           },
           "500" : {
-            "description" : "internal server error"
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       },
@@ -493,13 +369,13 @@
             }
           },
           "400" : {
-            "description" : "bad request"
+            "$ref" : "#/components/responses/BadRequest"
           },
           "401" : {
-            "description" : "unauthorized"
+            "$ref" : "#/components/responses/Unauthorized"
           },
           "500" : {
-            "description" : "internal server error"
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       }
@@ -531,13 +407,16 @@
             }
           },
           "400" : {
-            "description" : "bad request"
+            "$ref" : "#/components/responses/BadRequest"
           },
           "401" : {
-            "description" : "unauthorized"
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
           },
           "500" : {
-            "description" : "internal server error"
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       },
@@ -566,13 +445,16 @@
             }
           },
           "400" : {
-            "description" : "bad request"
+            "$ref" : "#/components/responses/BadRequest"
           },
           "401" : {
-            "description" : "unauthorized"
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
           },
           "500" : {
-            "description" : "internal server error"
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       },
@@ -594,13 +476,16 @@
             "description" : "resume successfully deleted"
           },
           "400" : {
-            "description" : "bad request"
+            "$ref" : "#/components/responses/BadRequest"
           },
           "401" : {
-            "description" : "unauthorized"
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
           },
           "500" : {
-            "description" : "internal server error"
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       }
@@ -735,6 +620,60 @@
           }
         },
         "description" : "globacv User model."
+      },
+      "Error" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "integer"
+          },
+          "message" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "message" ]
+      }
+    },
+    "responses" : {
+      "NotFound" : {
+        "description" : "The specified resource was not found",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "BadRequest" : {
+        "description" : "Bad request",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalServer" : {
+        "description" : "Internal server error",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized" : {
+        "description" : "Unauthorized",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
       }
     }
   }
