@@ -503,7 +503,7 @@
     "schemas" : {
       "Resume" : {
         "type" : "object",
-        "required" : [ "file", "user" ],
+        "required" : [ "file" ],
         "properties" : {
           "id" : {
             "type" : "string",
@@ -641,7 +641,7 @@
             "example" : "user successfully deleted"
           }
         },
-        "required" : [ "code", "message" ]
+        "required" : [ "status", "message" ]
       }
     },
     "responses" : {
