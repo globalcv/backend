@@ -624,7 +624,7 @@
       "Error" : {
         "type" : "object",
         "properties" : {
-          "code" : {
+          "status" : {
             "type" : "integer",
             "example" : 200
           },
