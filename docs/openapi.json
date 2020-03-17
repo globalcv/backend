@@ -1,6 +1,9 @@
 {
   "openapi" : "3.0.0",
   "servers" : [ {
+    "url" : "https://api.globalcv.io/v1",
+    "description" : "globalcv API endpoint."
+  }, {
     "description" : "SwaggerHub API Auto Mocking",
     "url" : "https://virtserver.swaggerhub.com/ciehanski/globalcv/v1"
   } ],
@@ -29,12 +32,12 @@
     "/users" : {
       "get" : {
         "tags" : [ "developers" ],
-        "summary" : "retrives all users",
+        "summary" : "retrieve all users",
         "operationId" : "listUsers",
-        "description" : "Retrieves all users.",
+        "description" : "Returns all globalcv users.",
         "responses" : {
           "200" : {
-            "description" : "search results matching criteria",
+            "description" : "all globalcv users",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -47,15 +50,21 @@
             }
           },
           "400" : {
-            "description" : "bad input parameter"
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       },
       "post" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "creates a user",
+        "summary" : "create a user",
         "operationId" : "createUser",
-        "description" : "Creates a new globalcv user.                  \n",
+        "description" : "Creates a new globalcv user.",
         "parameters" : [ {
           "in" : "path",
           "name" : "email",
@@ -85,27 +94,20 @@
             }
           },
           "400" : {
-            "description" : "bad request"
-          }
-        },
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/User"
-              }
-            }
+            "$ref" : "#/components/responses/BadRequest"
           },
-          "description" : "User"
+          "500" : {
+            "$ref" : "#/components/responses/InternalServer"
+          }
         }
       }
     },
     "/users/{id}" : {
       "get" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "retrieves a user",
+        "summary" : "retrieve a user",
         "operationId" : "getUserByID",
-        "description" : "retrieves a user",
+        "description" : "Retrieves a globalcv user.",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -118,15 +120,34 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "returns the requested user",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       },
       "patch" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "updates user settings",
+        "summary" : "update a user's settings",
         "operationId" : "updateUser",
-        "description" : "updates user settings",
+        "description" : "Updates a globalcv user's settings.",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -138,15 +159,34 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "returns the updated user",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       },
       "delete" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "deletes a user",
+        "summary" : "delete a user",
         "operationId" : "deleteUser",
-        "description" : "Deletes a globalcv User.",
+        "description" : "Deletes a globalcv user.",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -158,7 +198,19 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "user successfully deleted"
+          },
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       }
@@ -166,9 +218,9 @@
     "/users/login" : {
       "post" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "logs in a user",
+        "summary" : "log in a user",
         "operationId" : "loginUser",
-        "description" : "logs in a user",
+        "description" : "Logs in a globalcv user.",
         "parameters" : [ {
           "in" : "path",
           "name" : "email",
@@ -188,7 +240,26 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "returns the logged in user",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       }
@@ -196,12 +267,40 @@
     "/users/logout" : {
       "post" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "logs out a user",
+        "summary" : "log out current user",
         "operationId" : "logoutUser",
-        "description" : "logs out a user",
+        "description" : "Logs out the currently signed in globalcv user.\n",
         "responses" : {
           "200" : {
-            "description" : "hehe"
+            "description" : "user successfully logged out"
+          },
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServer"
+          }
+        }
+      }
+    },
+    "/users/whoami" : {
+      "get" : {
+        "tags" : [ "developers", "users" ],
+        "summary" : "get logged in user & refresh tokens",
+        "operationId" : "whoami",
+        "description" : "Returns the currently logged in globalcv user from cookies and refreshes their tokens. To be called on a new session or before current session is about to expire.",
+        "responses" : {
+          "200" : {
+            "description" : "user successfully logged out"
+          },
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       }
@@ -209,12 +308,12 @@
     "/resumes" : {
       "get" : {
         "tags" : [ "developers" ],
-        "summary" : "retrieves all resumes",
+        "summary" : "retrieve all resumes",
         "operationId" : "listResumes",
-        "description" : "Retrieves all resumes.      \n",
+        "description" : "Retrieves all globalcv resumes.",
         "responses" : {
           "200" : {
-            "description" : "search results matching criteria",
+            "description" : "returns all resumes",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -227,13 +326,19 @@
             }
           },
           "400" : {
-            "description" : "bad input parameter"
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       },
       "post" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "creates a resume",
+        "summary" : "create a resume",
         "operationId" : "createResume",
         "description" : "Creates a resume for a globalcv user.",
         "parameters" : [ {
@@ -241,9 +346,9 @@
           "name" : "user",
           "required" : true,
           "schema" : {
-            "type" : "string",
-            "format" : "integer",
-            "example" : "5"
+            "type" : "integer",
+            "example" : 3,
+            "minimum" : 1
           }
         }, {
           "in" : "path",
@@ -257,42 +362,65 @@
         } ],
         "responses" : {
           "201" : {
-            "description" : "resume successfully created"
-          },
-          "400" : {
-            "description" : "bad request"
-          }
-        },
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/Resume"
+            "description" : "resume successfully created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Resume"
+                }
               }
             }
           },
-          "description" : "User resume"
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServer"
+          }
         }
       }
     },
     "/resumes/{id}" : {
       "get" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "retrieves a resume",
+        "summary" : "retrieve a resume",
         "operationId" : "getResume",
-        "description" : "retrieves a resume",
+        "description" : "Retrieves a globalcv resume.",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
           "required" : true,
           "schema" : {
             "type" : "integer",
+            "example" : 3,
             "minimum" : 1
           }
         } ],
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "returns the requested resume",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       },
@@ -300,37 +428,72 @@
         "tags" : [ "developers", "users" ],
         "summary" : "update resume settings",
         "operationId" : "updateResume",
-        "description" : "update resume settings",
+        "description" : "Updates a resumes settings.",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
           "required" : true,
           "schema" : {
-            "type" : "integer"
+            "type" : "integer",
+            "example" : 3,
+            "minimum" : 1
           }
         } ],
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "returns updated resume",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Resume"
+                }
+              }
+            }
+          },
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       },
       "delete" : {
         "tags" : [ "developers", "users" ],
-        "summary" : "deletes a resume",
+        "summary" : "delete a resume",
         "operationId" : "deleteResume",
-        "description" : "deletes a resume",
+        "description" : "Deletes a globalcv resume.",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
           "required" : true,
           "schema" : {
-            "type" : "integer"
+            "type" : "integer",
+            "example" : 3,
+            "minimum" : 1
           }
         } ],
         "responses" : {
           "200" : {
-            "description" : "worked!"
+            "description" : "resume successfully deleted"
+          },
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServer"
           }
         }
       }
@@ -340,7 +503,7 @@
     "schemas" : {
       "Resume" : {
         "type" : "object",
-        "required" : [ "file", "user" ],
+        "required" : [ "file" ],
         "properties" : {
           "id" : {
             "type" : "string",
@@ -389,8 +552,8 @@
         "required" : [ "email", "password" ],
         "properties" : {
           "id" : {
-            "type" : "string",
-            "example" : "1"
+            "type" : "integer",
+            "example" : 1
           },
           "gcvid" : {
             "type" : "string",
@@ -465,6 +628,62 @@
           }
         },
         "description" : "globacv User model."
+      },
+      "Error" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "integer",
+            "example" : 200
+          },
+          "message" : {
+            "type" : "string",
+            "example" : "user successfully deleted"
+          }
+        },
+        "required" : [ "status", "message" ]
+      }
+    },
+    "responses" : {
+      "NotFound" : {
+        "description" : "The specified resource was not found",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "BadRequest" : {
+        "description" : "Bad request",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalServer" : {
+        "description" : "Internal server error",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized" : {
+        "description" : "Unauthorized",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
       }
     }
   }
