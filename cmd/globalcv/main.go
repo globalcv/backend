@@ -23,6 +23,7 @@ func main() {
 	a, err := globalcv.New(globalcv.Options{
 		Addr:   os.Getenv("addr"),
 		DBhost: os.Getenv("dbhost"),
+		DBport: os.Getenv("dbport"),
 		DBname: os.Getenv("dbname"),
 		DBuser: os.Getenv("dbuser"),
 		DBpass: os.Getenv("dbpass"),
@@ -39,7 +40,7 @@ func main() {
 		}
 	}()
 
-	// Handle server interrupts\
+	// Handle server interrupts
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	go func() {
@@ -56,7 +57,6 @@ func main() {
 			a.Logger.Fatalf("Could not gracefully shutdown the server: %v", err)
 		}
 
-		// verify, in worst case call cancel via defer
 		select {
 		case <-time.After(a.Server.WriteTimeout):
 			a.Logger.Println("not all connections to server were gracefully closed")

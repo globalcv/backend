@@ -15,15 +15,12 @@ import (
 	"github.com/ciehanski/go-jwt-middleware"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/chi"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/natefinch/lumberjack"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/net/http2"
 )
 
 const (
-	// JWT
 	jwtCookie     = "jwt"
 	refreshCookie = "refresh"
 	jwtIss        = "globalcv-backend"
@@ -40,7 +37,7 @@ func New(options ...Options) (*API, error) {
 	if opts.Addr == "" {
 		opts.Addr = "127.0.0.1:8000"
 	}
-	if opts.DBname == "" || opts.DBpass == "" || opts.DBuser == "" || opts.DBhost == "" {
+	if opts.DBname == "" || opts.DBport == "" || opts.DBpass == "" || opts.DBuser == "" || opts.DBhost == "" {
 		return nil, errors.New("please provide database parameters")
 	}
 
@@ -73,12 +70,12 @@ func New(options ...Options) (*API, error) {
 	}
 
 	// Init JWT
-	newAPI.JWTMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
+	newAPI.Authenticator = jwtmiddleware.New(jwtmiddleware.Options{
 		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
 			return []byte(os.Getenv("jwt_secret")), nil
 		},
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
-			newAPI.respond(w, http.StatusInternalServerError, err.Error(),
+			newAPI.err(w, http.StatusInternalServerError, err.Error(),
 				"JWT error: %v", err)
 		},
 		SigningMethod:       jwt.SigningMethodHS256,
@@ -86,6 +83,13 @@ func New(options ...Options) (*API, error) {
 		EnableAuthOnOptions: true,
 		Debug:               newAPI.Options.Debug,
 	})
+
+	// Set domain
+	if newAPI.Options.Debug {
+		newAPI.Options.Domain = "localhost"
+	} else {
+		newAPI.Options.Domain = "globalcv.io"
+	}
 
 	// Return the newly initialized API object
 	return &newAPI, nil
@@ -134,41 +138,26 @@ func (a *API) initServer() error {
 	return nil
 }
 
-func (a *API) initDB() error {
-	// Database parameters
-	dbURI := fmt.Sprintf("host=%s user=%s dbname=%s password=%s sslmode=%s", a.Options.DBhost,
-		a.Options.DBuser, a.Options.DBname, a.Options.DBpass, a.Options.DBssl)
-
-	// Connect to the database
-	var err error
-	if a.DB, err = gorm.Open("postgres", dbURI); err != nil {
-		return err
-	}
-
-	// Enable pooling
-	// ref: https://github.com/jinzhu/gorm/issues/246
-	a.DB.DB().SetMaxIdleConns(0)
-	a.DB.DB().SetMaxOpenConns(0)
-
-	// Double-check we can ping the DB after it connects
-	if err = a.DB.DB().Ping(); err != nil {
-		return err
-	}
-
-	// Auto migrate database based on the model structs below
-	if a.Options.Debug {
-		a.DB.Debug().AutoMigrate(User{}, Resume{})
-		return nil
-	}
-
-	a.DB.AutoMigrate(User{}, Resume{})
-	return nil
-}
-
 // logf prints application errors if debug is enabled
 func (a *API) logf(format string, args ...interface{}) {
 	if a.Options.Debug {
 		a.Logger.Printf(format, args...)
+	}
+}
+
+func (a *API) err(w http.ResponseWriter, status int, message, log string, logArgs ...interface{}) {
+	// Log the response
+	a.logf(log, logArgs...)
+	// Write status header
+	w.WriteHeader(status)
+	// Basic headers
+	w.Header().Set("Accept-Charset", "utf-8")
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "localhost")
+
+	// Encode and send the response
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{"status": status, "message": message}); err != nil {
+		a.Logger.Println(err)
 	}
 }
 
@@ -203,7 +192,7 @@ func (a *API) respond(w http.ResponseWriter, status int, data interface{}, log s
 		"Accept, Content-Type, Content-Length, Accept-Encoding, Authorization")
 	w.Header().Set("Vary", "Accept-Encoding")
 	// Encode and send the response
-	if err := json.NewEncoder(w).Encode(map[string]interface{}{"status": status, "message": data}); err != nil {
+	if err := json.NewEncoder(w).Encode(data); err != nil {
 		a.Logger.Println(err)
 	}
 }

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 export dbhost="127.0.0.1"
+export dbport="5432"
 export dbname="globalcv"
 export dbuser="globalcv"
 export dbpass="globalcv"
